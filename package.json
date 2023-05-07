@@ -1,5 +1,5 @@
 {
-  "name": "express-route",
+  "name": "express-route-register",
   "version": "1.0.0",
   "description": "ABCD",
   "main": "dist/index.js",

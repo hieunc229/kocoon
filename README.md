@@ -65,11 +65,11 @@ export default function(req: Request, res: Response) {
 // app.ts
 import path from "path"
 import express from "express";
-import registerHandlers from "./modules/express-route";
+import register from "express-route-register";
 
 const app = express();
 
-registerHandlers({
+register({
   app,
   // debug: true, // log registed handlers
   routePath: "/",
