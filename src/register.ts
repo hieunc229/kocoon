@@ -56,8 +56,15 @@ export default async function registerHandlers(options: {
     const pFilePath = p.filePath;
     const pHandlePath = p.handlePath;
 
-    const handler = (await import(pFilePath)).default;
-    app[pMethod as "post" | "get" | "patch" | "delete" | "use"](pHandlePath, handler);
+    const handlers = (await import(pFilePath));
+
+
+    app[pMethod as "post" | "get" | "patch" | "delete" | "use" | "options"]
+      .apply(
+        app,
+        // @ts-ignore
+        [pHandlePath, Object.keys(handlers).map(k => handlers[k])])
+  
     debug && console.log(`[${(pMethod.toUpperCase() + "  ").substring(0, 5)}]`, pHandlePath, pFilePath)
   }
 }
