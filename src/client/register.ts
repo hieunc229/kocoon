@@ -42,7 +42,7 @@ export default async function registerClient(options: {
   await registerPath("", dirPath);
 
   paths = paths.sort(sortPath);
-  app.use("/", express.static("./src/.fresh/public"))
+  app.use("/", express.static("./out/public"))
 
   for (let p of paths) {
 

@@ -56,7 +56,7 @@ async function handler(handlers: HandlerProps, req: Request, res: Response) {
   const {pipe} = renderToPipeableStream(
     React.createElement(App, {component, data}),
     {
-      bootstrapScripts: ["/bundle.js"],
+      bootstrapScripts: ["/main.js"],
       onShellReady() {
         res.setHeader("content-type", "text/html");
         pipe(res);

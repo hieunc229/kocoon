@@ -10,7 +10,7 @@ export default async function registerHandlers(options: {
     route: string,
     dirPath: string
   },
-  client: {
+  client?: {
     route: string,
     dirPath: string
   },
@@ -20,6 +20,6 @@ export default async function registerHandlers(options: {
   console.log("Start...");
 
   const { app, server, client, debug = false } = options;
-  await registerClient({ app, debug, ...client });
+  client && await registerClient({ app, debug, ...client });
   await registerServerHandlers({ app, debug,  ...server });
 }

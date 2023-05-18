@@ -33,9 +33,12 @@ export async function bundleClient(props: Props) {
   const dfConfigs = (await import(path.join(process.cwd(), "webpack.config"))).default;
   const configs = Object.assign({}, dfConfigs, {
     mode: "development",
-    entry: [`./${entryPath}`, ...entries.map(item => item.filePath)]
+    entry: [`./${entryPath}`, ...entries.map(item => item.filePath)],
+    // output: {
+    //   ...dfConfigs.output,
+    //   : false
+    // }
   });
-
 
   const compiler = webpack(configs);
   compiler.run((err, stats) => {
