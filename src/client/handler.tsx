@@ -1,7 +1,16 @@
 import React from "react";
 
-import {renderToPipeableStream} from "react-dom/server";
-import {Request, Response} from "express";
+import { renderToPipeableStream } from "react-dom/server";
+import { Request, Response } from "express";
+import { AppContextProvider } from "./provider";
+import { StaticHandler } from "@remix-run/router";
+
+import {
+  StaticRouter,
+  StaticRouterProvider,
+  createStaticHandler,
+  createStaticRouter,
+} from "react-router-dom/server";
 
 export type ServerProps = {
   data?: any;
@@ -9,14 +18,32 @@ export type ServerProps = {
   redirect?: string;
 };
 
-type HandlerProps = {
+export type HandlerProps = {
   default: any;
   getServerProps?: (req: Request) => ServerProps | Promise<ServerProps>;
 };
 
-export function clientHandler(handlers: HandlerProps) {
+type ClientHandlerProps = {
+  staticRoutes: any[];
+  staticHandler: StaticHandler;
+};
+
+export function clientHandler(
+  handlerProps: {
+    handler: HandlerProps;
+    layout?: HandlerProps;
+  },
+  props: ClientHandlerProps
+) {
   return function (req: Request, res: Response) {
-    handler(handlers, req, res);
+    handleRequest(
+      {
+        handlerProps,
+        props,
+      },
+      req,
+      res
+    );
   };
 }
 
@@ -28,11 +55,24 @@ function isPromise(p: any) {
   return false;
 }
 
-async function handler(handlers: HandlerProps, req: Request, res: Response) {
-  let data = null;
+async function handleRequest(
+  options: {
+    handlerProps: {
+      handler: HandlerProps;
+      layout?: HandlerProps;
+    };
+    props: ClientHandlerProps;
+  },
+  req: Request,
+  res: Response
+) {
+  let serverData = null;
 
-  if (handlers.getServerProps) {
-    const fn = handlers.getServerProps(req);
+  const { props } = options;
+  const { handler } = options.handlerProps;
+
+  if (handler.getServerProps) {
+    const fn = handler.getServerProps(req);
     const {
       redirect,
       status,
@@ -48,13 +88,18 @@ async function handler(handlers: HandlerProps, req: Request, res: Response) {
       return;
     }
 
-    data = propsData;
+    serverData = propsData;
   }
 
-  const component = handlers.default;
+  const statichandler = props.staticHandler;
+  const fetchRequest = createFetchRequest(req);
+  const context: any = await statichandler.query(fetchRequest);
+  const router = createStaticRouter(statichandler.dataRoutes, context);
 
-  const {pipe} = renderToPipeableStream(
-    React.createElement(App, {component, data}),
+  const { pipe } = renderToPipeableStream(
+    <App data={serverData}>
+      <StaticRouterProvider context={context} router={router} />
+    </App>,
     {
       bootstrapScripts: ["/bundle.js"],
       onShellReady() {
@@ -65,24 +110,62 @@ async function handler(handlers: HandlerProps, req: Request, res: Response) {
   );
 }
 
-function App(props: {data: any; component: any}) {
-  const {data, component} = props;
+function App(props: { data: any; children: any }) {
+  const { data, children } = props;
   return (
     <html>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="stylesheet" href="/styles.css"></link>
+        <link rel="stylesheet" href="/styles.css" />
         <title>Fullstack React with Fresh</title>
-        
       </head>
-
       <body>
-        {React.createElement(component)}
-        <div id="ssr-data" style={{display: "none"}}>
+        {
+          <AppContextProvider serverData={data}>
+            {/* {React.createElement(component)} */}
+            {children}
+          </AppContextProvider>
+        }
+        <div id="ssr-data" style={{ display: "none" }}>
           {JSON.stringify(data)}
         </div>
       </body>
     </html>
   );
+}
+
+function createFetchRequest(req: Request) {
+  let origin = `${req.protocol}://${req.get("host")}`;
+  // Note: This had to take originalUrl into account for presumably vite's proxying
+  let url = new URL(req.originalUrl || req.url, origin);
+
+  let controller = new AbortController();
+  req.on("close", () => controller.abort());
+
+  let headers = new Headers();
+
+  for (let [key, values] of Object.entries(req.headers)) {
+    if (values) {
+      if (Array.isArray(values)) {
+        for (let value of values) {
+          headers.append(key, value);
+        }
+      } else {
+        headers.set(key, values);
+      }
+    }
+  }
+
+  let init: any = {
+    method: req.method,
+    headers,
+    signal: controller.signal,
+  };
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    init.body = req.body;
+  }
+
+  return new Request(url.href, init);
 }
