@@ -10,11 +10,17 @@ Supported:
 
 ### Example folder structure
 ```
-├── src
-│   ├── handlers
+src
+├── app
+│   ├── server
 │   │   ├── _middleware.ts
+│   │   ├── index.ts // or get.ts
+│   │   │── post.ts
+│   │   │── users
+│   │       ├── index.ts
+│   ├── client
+│   │   ├── _layout.ts
 │   │   ├── index.ts
-│   │   │── index.post.ts
 │   │   │── users
 │   │       ├── index.ts
 ├── app.ts
@@ -22,7 +28,7 @@ Supported:
 
 ### Register middleware
 ```ts
-// src/handlers/_middleware.ts
+// src/app/server/_middleware.ts
 import { Request, Response, NextFunction } from "express";
 
 export default function(req: Request, res: Response, next: NextFunction) {
@@ -34,7 +40,7 @@ export default function(req: Request, res: Response, next: NextFunction) {
 ### Register GET
 
 ```ts
-// src/handlers/index.ts (or src/handlers/index.get.ts)
+// src/app/server/index.ts
 import { Request, Response } from "express";
 
 export default function(req: Request, res: Response) {
@@ -48,7 +54,7 @@ export default function(req: Request, res: Response) {
 ### Register nested route
 
 ```ts
-// src/handlers/users/index.ts (or src/handlers/users.get.ts)
+// src/app/server/users/index.ts
 import { Request, Response } from "express";
 
 export default function(req: Request, res: Response) {
@@ -72,8 +78,7 @@ const app = express();
 register({
   app,
   // debug: true, // log registed handlers
-  routePath: "/",
-  dirPath: path.join(__dirname, "/handlers"),
+  react: "/"
 });
 
 
