@@ -1,7 +1,14 @@
 import { Express } from "express";
 export default function registerHandlers(options: {
-    dirPath: string;
-    routePath: string;
     app: Express;
     debug?: boolean;
+    publicPath?: string;
+    server?: boolean | {
+        route: string;
+        dirPath: string;
+    };
+    react: boolean | {
+        route: string;
+        dirPath: string;
+    };
 }): Promise<void>;
