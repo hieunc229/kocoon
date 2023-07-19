@@ -63,25 +63,45 @@ function bundleClient(props) {
             return `{path:"${path}",Component:${r.handlerName}}`;
         })
             .join(","));
-        const entryPath = "./.fresh/tempEntry.tsx";
+        const tempDir = "./.reroute";
+        if (!fs_1.default.existsSync(tempDir)) {
+            fs_1.default.mkdirSync(tempDir);
+        }
+        const entryPath = path_1.default.join(tempDir, "tempEntry.tsx");
         fs_1.default.writeFileSync(entryPath, content);
         // @ts-ignore
-        const dfConfigs = (yield Promise.resolve(`${path_1.default.join(process.cwd(), "webpack.config")}`).then(s => __importStar(require(s))))
-            .default;
+        let dfConfigs = {};
+        const clientConfigPath = path_1.default.join(process.cwd(), "webpack.config.client");
+        try {
+            dfConfigs = (yield Promise.resolve(`${clientConfigPath}`).then(s => __importStar(require(s)))).default || {};
+        }
+        catch (e) {
+            // no client config
+        }
         const configs = Object.assign({}, dfConfigs, {
             mode: "development",
             entry: [`./${entryPath}`, ...entries.map((item) => item.filePath)],
+            output: {
+                path: publicPath,
+                filename: "bundle.js",
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.(tsx|ts)?$/,
+                        use: "ts-loader",
+                        exclude: /node_modules/,
+                    },
+                ],
+            },
         });
         const compiler = (0, webpack_1.default)(configs);
-        compiler.run((err, stats) => {
+        compiler.run((err) => {
             if (err) {
                 console.log(chalk_1.default.red("Pack Error", err.toString()));
                 return;
             }
-            console.log("Packed", stats === null || stats === void 0 ? void 0 : stats.hasErrors(), stats === null || stats === void 0 ? void 0 : stats.hasWarnings());
-            if (stats === null || stats === void 0 ? void 0 : stats.hasErrors()) {
-                console.log(stats.toString());
-            }
+            console.log(chalk_1.default.green("Packing completed"));
         });
     });
 }

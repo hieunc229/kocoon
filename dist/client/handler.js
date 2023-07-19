@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.clientHandler = void 0;
 const jsx_runtime_1 = require("react/jsx-runtime");
 const server_1 = require("react-dom/server");
-const provider_1 = require("./provider");
+const context_1 = require("../context");
 const server_2 = require("react-router-dom/server");
 function clientHandler(handlerProps, props) {
     return function (req, res) {
@@ -61,7 +61,7 @@ function handleRequest(options, req, res) {
 }
 function App(props) {
     const { data, children } = props;
-    return ((0, jsx_runtime_1.jsxs)("html", { children: [(0, jsx_runtime_1.jsxs)("head", { children: [(0, jsx_runtime_1.jsx)("meta", { charSet: "utf-8" }), (0, jsx_runtime_1.jsx)("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }), (0, jsx_runtime_1.jsx)("link", { rel: "stylesheet", href: "/styles.css" }), (0, jsx_runtime_1.jsx)("title", { children: "Fullstack React with Fresh" })] }), (0, jsx_runtime_1.jsxs)("body", { children: [(0, jsx_runtime_1.jsx)(provider_1.AppContextProvider, { serverData: data, children: children }), (0, jsx_runtime_1.jsx)("div", { id: "ssr-data", style: { display: "none" }, children: JSON.stringify(data) })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("html", { children: [(0, jsx_runtime_1.jsxs)("head", { children: [(0, jsx_runtime_1.jsx)("meta", { charSet: "utf-8" }), (0, jsx_runtime_1.jsx)("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }), (0, jsx_runtime_1.jsx)("link", { rel: "stylesheet", href: "/styles.css" }), (0, jsx_runtime_1.jsx)("title", { children: "Fullstack React with Fresh" })] }), (0, jsx_runtime_1.jsxs)("body", { children: [(0, jsx_runtime_1.jsx)(context_1.AppContextProvider, { serverData: data, children: children }), (0, jsx_runtime_1.jsx)("div", { id: "ssr-data", style: { display: "none" }, children: JSON.stringify(data) })] })] }));
 }
 function createFetchRequest(req) {
     let origin = `${req.protocol}://${req.get("host")}`;

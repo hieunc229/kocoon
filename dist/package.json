@@ -1,0 +1,25 @@
+{
+  "name": "express-route-register",
+  "version": "2.1.4",
+  "description": "ABCD",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "publish": "cp package.json dist/package.json && cd dist && npm publish && cd .."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hieunc229/express-route.git"
+  },
+  "keywords": [
+    "express",
+    "expressjs",
+    "routing"
+  ],
+  "author": "Hieu C. Nguyen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hieunc229/express-route/issues"
+  },
+  "homepage": "https://github.com/hieunc229/express-route#readme"
+}

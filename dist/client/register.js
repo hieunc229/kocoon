@@ -37,11 +37,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const handler_1 = require("./handler");
-const bundle_1 = require("./bundle");
 const chalk_1 = __importDefault(require("chalk"));
-const server_1 = require("react-router-dom/server");
 const react_1 = require("react");
+const server_1 = require("react-router-dom/server");
+const bundle_1 = require("./bundle");
+const handler_1 = require("./handler");
 const layoutRegex = /_layout$/i;
 function registerClient(options) {
     return __awaiter(this, void 0, void 0, function* () {
