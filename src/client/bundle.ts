@@ -11,10 +11,9 @@ type Props = {
   routes: ClientRoutes;
 };
 
-export async function bundleClient(props: Props) {
-
+export async function bundleReactClient(props: Props) {
   const { publicPath = "./public", routes } = props;
-  
+
   const entries = props.entries.map((e) => ({
     ...e,
     name: e.handlePath.replace(/(\/|:)/g, "_"),
@@ -31,7 +30,6 @@ export async function bundleClient(props: Props) {
       encoding: "utf-8",
     }
   );
-
 
   const content = appTemplate
     .replace(
@@ -56,26 +54,51 @@ export async function bundleClient(props: Props) {
         .join(",")
     );
 
-  const entryPath = "./.fresh/tempEntry.tsx";
+  const tempDir = "./.reroute";
+
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+  }
+
+  const entryPath = path.join(tempDir, "tempEntry.tsx");
   fs.writeFileSync(entryPath, content);
 
   // @ts-ignore
-  const dfConfigs = (await import(path.join(process.cwd(), "webpack.config")))
-    .default;
-  const configs = Object.assign({}, dfConfigs, {
-    mode: "development",
+  let dfConfigs = {};
+  const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
+
+  try {
+    dfConfigs = (await import(clientConfigPath)).default || {};
+  } catch (e) {
+    // no client config
+  }
+
+  const configs: webpack.Configuration = Object.assign({}, dfConfigs, {
+    mode: "development" as any,
     entry: [`./${entryPath}`, ...entries.map((item) => item.filePath)],
+    output: {
+      path: publicPath,
+      filename: "bundle.js",
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(tsx|ts)?$/,
+          use: "ts-loader",
+          exclude: /node_modules/,
+        },
+      ],
+    },
   });
 
   const compiler = webpack(configs);
-  compiler.run((err, stats) => {
+
+  compiler.run((err) => {
     if (err) {
       console.log(chalk.red("Pack Error", err.toString()));
       return;
     }
-    console.log("Packed", stats?.hasErrors(), stats?.hasWarnings());
-    if (stats?.hasErrors()) {
-      console.log(stats.toString());
-    }
+
+    console.log(chalk.green("Packing completed"));
   });
 }

@@ -1,33 +1,47 @@
 import fs from "fs";
 import path from "path";
+import chalk from "chalk";
 
 import { Express } from "express";
-import { HandlerProps, clientHandler } from "./handler";
-import { bundleClient } from "./bundle";
-import chalk from "chalk";
-import {
-  createStaticHandler,
-  createStaticRouter,
-  StaticRouterProvider,
-} from "react-router-dom/server";
-import { RouteObject } from "react-router-dom";
 import { createElement } from "react";
+import { createStaticHandler } from "react-router-dom/server";
+
+import { bundleReactClient } from "./bundle";
+import { HandlerProps, clientHandler } from "./handler";
+import { bundleReactSPAClient } from "./bundleSPA";
 
 export type PathProps = {
   handlePath: string;
   filePath: string;
 };
 
+export type ReactSettings = {
+  route: string;
+  /**
+   * Use as single page app
+   */
+  spa?: boolean;
+  dirPath: string;
+};
+
 const layoutRegex = /_layout$/i;
 
-export default async function registerClient(options: {
+export default async function registerReactClient(options: {
   app: Express;
   debug?: boolean;
-  route: string;
-  dirPath: string;
   publicPath?: string;
+  settings: ReactSettings;
 }) {
-  const { app, dirPath, route, publicPath, debug = false } = options;
+  const { route, spa, dirPath } = options.settings;
+  const { app, publicPath, debug = false } = options;
+
+  if (spa) {
+    await bundleReactSPAClient({ publicPath, dirPath });
+    app.use(`${route}`, function (req, res) {
+      res.sendFile(path.join(publicPath || "./public", "index.html"));
+    });
+    return;
+  }
 
   let paths: PathProps[] = [];
 
@@ -97,12 +111,16 @@ export default async function registerClient(options: {
       if (layout) {
         return {
           path,
-          element: createElement(layout.default, null, createElement(handler.default)),
+          element: createElement(
+            layout.default,
+            null,
+            createElement(handler.default)
+          ),
         };
       }
       return {
         path,
-        Component:handler.default,
+        Component: handler.default,
       };
     }
   );
@@ -116,7 +134,7 @@ export default async function registerClient(options: {
     debug && console.log(chalk.green(`[Client]`, path));
   });
 
-  await bundleClient({ entries: paths, publicPath, routes });
+  await bundleReactClient({ entries: paths, publicPath, routes });
 }
 
 export type ClientRouteProps = {
@@ -125,7 +143,7 @@ export type ClientRouteProps = {
   handlerPath: string;
   layout?: HandlerProps;
   layoutName?: string;
-  layoutPath?: string
+  layoutPath?: string;
 };
 
 export type ClientRoutes = { [path: string]: ClientRouteProps };
