@@ -3,7 +3,7 @@ import { hydrateRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, useRouteError } from "react-router-dom";
 
 // @ts-ignore
-import { AppContextProvider } from "express-route-register/client/provider";
+import { AppContextProvider } from "express-route-register/context";
 
 {{imports}}
 

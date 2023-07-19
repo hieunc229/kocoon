@@ -55,13 +55,3 @@ export function useServerData() {
 export function useAppContext() {
   return useContext(AppContext);
 }
-
-export function useParams(): { [name: string]: string } | null {
-  const { router } = useContext(AppContext);
-
-  if (router) {
-    return null;
-  }
-
-  return null;
-}
