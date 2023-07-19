@@ -21,6 +21,7 @@ export default async function registerServerHandlers(options: {
   let paths: PathProps[] = [];
 
   async function registerPath(ppath: string, _path: string) {
+
     for (let p of fs.readdirSync(_path)) {
       const filePath = path.join(_path, p);
       const currentRoutePath = path.join(route, ppath, p);

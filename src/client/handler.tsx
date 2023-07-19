@@ -2,13 +2,11 @@ import React from "react";
 
 import { renderToPipeableStream } from "react-dom/server";
 import { Request, Response } from "express";
-import { AppContextProvider } from "./provider";
+import { AppContextProvider } from "../context";
 import { StaticHandler } from "@remix-run/router";
 
 import {
-  StaticRouter,
   StaticRouterProvider,
-  createStaticHandler,
   createStaticRouter,
 } from "react-router-dom/server";
 
