@@ -1,6 +1,6 @@
 # Express Route
 
-Auto register handlers for Express, inspired by NextJS. 
+Build fullstack framework powered by ExpressJS.
 
 Supported:
 - Basic methods: GET, POST, PATH, OPTIONS, DELETE

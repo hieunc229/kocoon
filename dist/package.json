@@ -1,20 +1,24 @@
 {
-  "name": "express-route-register",
-  "version": "2.1.4",
-  "description": "ABCD",
+  "name": "rumbo",
+  "version": "0.3.0",
+  "description": "Build fullstack apps, powered by ExpressJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "publish": "cp package.json dist/package.json && cd dist && npm publish && cd .."
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hieunc229/express-route.git"
+    "url": "git+https://github.com/hieunc229/rumbo.git"
   },
   "keywords": [
     "express",
     "expressjs",
-    "routing"
+    "routing",
+    "api",
+    "backend",
+    "react"
   ],
   "author": "Hieu C. Nguyen",
   "license": "MIT",

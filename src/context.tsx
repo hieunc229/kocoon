@@ -19,7 +19,7 @@ type Props = {
 };
 
 export class AppContextProvider extends Component<Props> {
-  state: AppContextProps;
+  override state: AppContextProps;
 
   constructor(props: Props) {
     super(props);
@@ -31,7 +31,7 @@ export class AppContextProvider extends Component<Props> {
     this.setState(changes);
   };
 
-  render() {
+  override render() {
     const ctxValues = {
       ...this.state,
       router: this.props.router,

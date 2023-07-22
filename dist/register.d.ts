@@ -1,14 +1,24 @@
 import { Express } from "express";
-export default function registerHandlers(options: {
+export type RumboAppType = "server" | "client-ssr" | "client-spa" | "static";
+export type RumboAppProps = {
+    location: string;
+    type: RumboAppType;
+};
+export type RumboAppConfigs = RumboAppProps & {
+    route: string;
+};
+export type RumboProps = {
     app: Express;
     debug?: boolean;
-    publicPath?: string;
-    server?: boolean | {
-        route: string;
-        dirPath: string;
+    publicDir?: string;
+    distDir?: string;
+    rootDir?: string;
+    routes: {
+        [route: string]: RumboAppProps;
     };
-    react: boolean | {
-        route: string;
-        dirPath: string;
+    listen?: boolean | {
+        host?: string;
+        port?: number;
     };
-}): Promise<void>;
+};
+export default function Rumbo(options: RumboProps): Promise<void>;
