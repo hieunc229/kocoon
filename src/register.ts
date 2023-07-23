@@ -8,12 +8,19 @@ import registerClientSSR from "./clientSSR/registerClientSSR";
 import registerClientSPA from "./clientSPA/registerClientSPA";
 
 import { Express } from "express";
+import { staticMiddleware } from "./utils";
 
 export type RumboAppType = "server" | "client-ssr" | "client-spa" | "static";
 
 export type RumboAppProps = {
   location: string;
   type: RumboAppType;
+
+  /**
+   * Enable React Router (react-router-dom)
+   * If your app is client-ssr, and already have router, set to `false`
+   */
+  useRouter?: boolean;
 };
 
 export type RumboAppConfigs = RumboAppProps & {
@@ -66,7 +73,7 @@ export default async function Rumbo(options: RumboProps) {
     fse.copySync(publicPath, distDir);
   }
 
-  app.use("/", express.static(distDir));
+  app.get("/*", staticMiddleware({ location: distDir }));
 
   for (const client of apps) {
     switch (client.type) {
@@ -91,7 +98,6 @@ export default async function Rumbo(options: RumboProps) {
         break;
     }
   }
-
 
   let { host, port } = Object.assign(
     { host: "localhost", port: 3000 },
