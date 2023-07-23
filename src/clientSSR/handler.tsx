@@ -6,6 +6,11 @@ import {
   StaticRouterProvider,
   createStaticRouter,
 } from "react-router-dom/server";
+import chalk from "chalk";
+import { createFetchRequest } from "./utils";
+import { isPromise } from "util/types";
+import { createElement } from "react";
+import { formatClassName } from "../utils";
 
 export type ServerProps = {
   data?: any;
@@ -21,8 +26,9 @@ export type HandlerProps = {
 type ClientHandlerProps = {
   staticRoutes: any[];
   staticHandler: StaticHandler;
-  AppComponent: any,
-  route: string
+  AppComponent: any;
+  route: string;
+  useRouter: boolean;
 };
 
 export function clientHandler(
@@ -44,14 +50,6 @@ export function clientHandler(
   };
 }
 
-function isPromise(p: any) {
-  if (typeof p === "object" && typeof p.then === "function") {
-    return true;
-  }
-
-  return false;
-}
-
 async function handleRequest(
   options: {
     handlerProps: {
@@ -66,7 +64,8 @@ async function handleRequest(
   let serverData = null;
 
   const { handler } = options.handlerProps;
-  const { staticHandler, AppComponent, route } = options.props;
+  const { AppComponent, route, staticHandler, useRouter, staticRoutes } =
+    options.props;
 
   if (handler.getServerProps) {
     const fn = handler.getServerProps(req);
@@ -88,58 +87,64 @@ async function handleRequest(
     serverData = propsData;
   }
 
-  const fetchRequest = createFetchRequest(req);
-  const context: any = await staticHandler.query(fetchRequest);
-  const router = createStaticRouter(staticHandler.dataRoutes, context);
-  
-  const { pipe } = renderToPipeableStream(
-    <AppComponent data={serverData}>
-      <StaticRouterProvider context={context} router={router} />
-    </AppComponent>,
-    {
-      bootstrapScripts: [`${route.replace("/", "_")}.js`],
-      onShellReady() {
-        res.setHeader("content-type", "text/html");
-        pipe(res);
-      },
-      onError(err, info) {
-        console.log("Failed to render", {err, info});
-        res.status(500).send(err)
-      },
-    }
+  let AppContainer = useRouter
+    ? await getAppWithRouter({
+        serverData,
+        AppComponent,
+        staticHandler,
+        req,
+      })
+    : getAppWithoutRouter({
+        serverData,
+        AppComponent,
+        staticRoutes,
+        req,
+      });
+
+  const { pipe } = renderToPipeableStream(AppContainer, {
+    bootstrapScripts: [`/static/${formatClassName(route)}.js`],
+    onShellReady() {
+      res.setHeader("content-type", "text/html");
+      pipe(res);
+    },
+    onError(err: any, info) {
+      console.log(chalk.red("Failed to render"), { err, info });
+      res.status(500).send(err.toString());
+    },
+  });
+}
+
+function getAppWithoutRouter(props: {
+  req: ExpressReq;
+  staticRoutes: any[];
+  serverData: any;
+  AppComponent: any;
+}) {
+  const { req, staticRoutes, serverData, AppComponent } = props;
+
+  let current = staticRoutes[0];
+
+  return (
+    <AppComponent data={serverData} settings={{ useRouter: false }}>
+      {current.Component ? createElement(current.Component) : current.element}
+    </AppComponent>
   );
 }
 
-function createFetchRequest(req: ExpressReq) {
-  let origin = `${req.protocol}://${req.get("host")}`;
-  let url = new URL(req.originalUrl || req.url, origin);
+async function getAppWithRouter(props: {
+  req: ExpressReq;
+  staticHandler: StaticHandler;
+  serverData: any;
+  AppComponent: any;
+}) {
+  const { req, staticHandler, serverData, AppComponent } = props;
+  const fetchRequest = createFetchRequest(req);
+  const context: any = await staticHandler.query(fetchRequest);
+  const router = createStaticRouter(staticHandler.dataRoutes, context);
 
-  let controller = new AbortController();
-  req.on("close", () => controller.abort());
-
-  let headers = new Headers();
-
-  for (let [key, values] of Object.entries(req.headers)) {
-    if (values) {
-      if (Array.isArray(values)) {
-        for (let value of values) {
-          headers.append(key, value);
-        }
-      } else {
-        headers.set(key, values);
-      }
-    }
-  }
-
-  let init: any = {
-    method: req.method,
-    headers,
-    signal: controller.signal,
-  };
-
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    init.body = req.body;
-  }
-
-  return new Request(url.href, init);
+  return (
+    <AppComponent data={serverData}>
+      <StaticRouterProvider context={context} router={router} />
+    </AppComponent>
+  );
 }

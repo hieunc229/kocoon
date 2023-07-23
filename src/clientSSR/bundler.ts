@@ -5,6 +5,7 @@ import webpack from "webpack";
 import { ClientRoutes, PathProps } from "./utils";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
 import { rumboTempDir } from "../configs";
+import { formatClassName } from "../utils";
 
 type Props = {
   entries: PathProps[];
@@ -19,7 +20,7 @@ export async function bundleClientSSR(props: Props) {
 
   const entries = props.entries.map((e) => ({
     ...e,
-    name: e.handlePath.replace(/(\/|:)/g, "_"),
+    name: formatClassName(e.handlePath),
     filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
   }));
 
@@ -80,9 +81,9 @@ export async function bundleClientSSR(props: Props) {
     {
       mode,
       output: {
-        path: distDir,
+        path: path.join(distDir, "static"),
         publicPath: "/",
-        filename: `${route.replace(/\//, "_")}.js`,
+        filename: `${formatClassName(route)}.js`,
       },
       resolve: {
         ...clientConfigs.resolve,

@@ -1,5 +1,6 @@
 import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import { formatClassName } from "./utils";
 
 export type WebpackMode = "none" | "development" | "production";
 type Props = {
@@ -56,7 +57,7 @@ export function getWebpackReactConfigs(props: Props) {
         React: "react",
       }),
       new MiniCssExtractPlugin({
-        filename: '[name].css' //`${route.replace(/\//g, "_")}.css`,
+        filename: `${formatClassName(route)}.css`,
       }),
     ],
   };

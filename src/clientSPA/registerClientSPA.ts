@@ -5,6 +5,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 
 import { Express } from "express";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
+import { formatClassName } from "../utils";
 
 type Props = {
   location: string;
@@ -50,13 +51,13 @@ export default async function registerClientSPA(props: Props): Promise<any> {
     {
       mode,
       output: {
-        path: distDir,
-        filename: "[name].js",
+        path: path.join(distDir, "static"),
+        filename: `${formatClassName(route)}.js`,
         publicPath: "/",
       },
       plugins: [
         new HtmlWebpackPlugin({
-          template: path.join(publicPath, "index.html"),
+          template: path.join(distDir, "index.html"),
         }),
         ...(clientConfigs.plugins || []),
       ],
