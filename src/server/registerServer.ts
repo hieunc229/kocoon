@@ -72,9 +72,7 @@ export default async function registerServer(options: {
       );
 
       debug &&
-        console.log(
-          chalk.gray(`- (${pMethod})`, pHandlePath, pFilePath)
-        );
+        console.log(chalk.gray(`- (${pMethod})`, pHandlePath, pFilePath));
     } else {
       console.log(
         chalk.redBright(
@@ -107,7 +105,7 @@ function getRegisterPath(options: { filePath: string; routePath: string }) {
     method = "use";
   }
 
-  const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1");
+  const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
 
   return {
     handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
