@@ -1,13 +1,16 @@
 import fs from "fs";
 import path from "path";
 import { rumboTempDir } from "../configs";
+import { formatClassName } from "../utils";
 
 export function generateApp(props: {
   publicPath: string;
   componentPath?: string;
   templatePath?: string;
+  route: string
 }) {
-  const { publicPath, templatePath, componentPath } = props;
+  
+  const { publicPath, templatePath, componentPath, route } = props;
 
   const htmlTemplate = fs.readFileSync(
     templatePath || `${publicPath}/index.html`,
@@ -17,7 +20,7 @@ export function generateApp(props: {
   );
 
   const appTemplate = fs.readFileSync(
-    path.join(__dirname, "./templateApp.tpl"),
+    path.join(__dirname, "./templateEntry.tpl"),
     {
       encoding: "utf-8",
     }
@@ -28,12 +31,13 @@ export function generateApp(props: {
     htmlTemplate
       .replace(
         `<div id="root"></div>`,
-        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify(data)}</div>`
+        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify({data,settings})}</div>`
       )
       .replace("<meta charset=", "<meta charSet=")
       // fix link doesn't have closing tag
       .replace(`rel="stylesheet"></head>`, `rel="stylesheet"/></head>`)
-      .replace("</head>", `<link href="/main.css" rel="stylesheet" /></head>`)
+      .replace("</head>", `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" /></head>`)
+      // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
   );
 
   const appClassPath = componentPath || path.join(rumboTempDir, "rumboApp.tsx");
@@ -47,15 +51,17 @@ export function getAppComponent(props: {
   rootDir: string;
   publicPath: string;
   templatePath?: string;
+  route: string
 }) {
-  const { rootDir } = props;
+  const { rootDir, route } = props;
 
-  const componentPath = path.join(rootDir, "..", rumboTempDir, "rumboApp.tsx");
+  const componentPath = path.join(rootDir, "..", rumboTempDir, `clientEntry${formatClassName(route)}.tsx`);
 
   if (!fs.existsSync(componentPath)) {
     generateApp({
       ...props,
       componentPath,
+      route
     });
   }
 
