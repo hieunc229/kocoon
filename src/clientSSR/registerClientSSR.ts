@@ -17,6 +17,7 @@ import {
   sortPath,
 } from "./utils";
 import { getAppComponent } from "./generator";
+import { formatClassName } from "../utils";
 
 type Props = {
   location: string;
@@ -26,6 +27,7 @@ type Props = {
   route: string;
   app: Express;
   debug?: boolean;
+  useRouter?: boolean
 };
 
 const layoutRegex = /_layout$/i;
@@ -39,26 +41,27 @@ export default async function registerClientSSR(props: Props) {
     route,
     rootDir,
     location,
+    useRouter = true
   } = props;
 
   let paths: PathProps[] = [];
   debug && console.log(chalk.green(`[Client SSR]`, route));
 
-  async function registerPath(ppath: string, _path: string) {
+  async function registerPath(pathRoute: string, _path: string) {
     for (let p of fs.readdirSync(_path)) {
-      const filePath = path.join(_path, p);
-      const currentRoutePath = path.join(route, ppath, p);
+      const fileAbsPath = path.join(_path, p);
+      const filePath = path.join(route, pathRoute, p);
 
-      if (fs.statSync(filePath).isDirectory()) {
-        await registerPath(currentRoutePath, filePath);
+      if (fs.statSync(fileAbsPath).isDirectory()) {
+        await registerPath(filePath, fileAbsPath);
         continue;
       }
 
-      if (filePath.match(/\.(js|ts|tsx|jsx)$/)) {
+      if (fileAbsPath.match(/\.(js|ts|tsx|jsx)$/)) {
         paths.push(
           getRegisterPath({
-            filePath,
-            routePath: currentRoutePath,
+            filePath: fileAbsPath,
+            routePath: filePath,
           })
         );
       }
@@ -91,13 +94,13 @@ export default async function registerClientSSR(props: Props) {
       rname = pHandlePath.replace(layoutRegex, "");
       data = {
         layout: handler,
-        layoutName: p.handlePath.replace(/(\/|:)/g, "_"),
+        layoutName: formatClassName(p.handlePath),
         layoutPath: p.filePath.replace(/\.(js|ts|tsx)$/g, ""),
       };
     } else {
       data = {
         handler,
-        handlerName: p.handlePath.replace(/(\/|:)/g, "_"),
+        handlerName: formatClassName(p.handlePath),
         handlerPath: p.filePath.replace(/\.(js|ts|tsx)$/g, ""),
       };
     }
@@ -125,7 +128,7 @@ export default async function registerClientSSR(props: Props) {
   );
 
   const staticHandler = createStaticHandler(staticRoutes);
-  const AppComponent = await getAppComponent({ rootDir, publicPath });
+  const AppComponent = await getAppComponent({ rootDir, publicPath, route });
 
   // register paths
   Object.entries(routes).forEach(([r, props]) => {
@@ -136,6 +139,7 @@ export default async function registerClientSSR(props: Props) {
         staticHandler,
         AppComponent,
         route: r,
+        useRouter
       })
     );
     debug && console.log(chalk.gray(`-`, r));

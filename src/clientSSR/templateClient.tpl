@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, useRouteError } from "react-router-dom";
 
@@ -11,7 +12,8 @@ declare global {
 
 type Props = {
   routes: { path: string, Component?: any, element?: any }[],
-  data: any
+  data: any,
+  settings: any
 }
 
 function ErrorBoundary() {
@@ -21,14 +23,18 @@ function ErrorBoundary() {
 }
 
 function ClientApp(props: Props) {
-  let router = createBrowserRouter(
-      props.routes.map((r) => ({
+  const routes = props.routes.map((r) => ({
         path: r.path,
         element: r.element,
         Component: r.Component,
         errorElement: <ErrorBoundary />,
       }))
-  );
+
+    if (props.settings.useRouter === false) {
+      const currentRoute = routes[0];
+      return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
+    }
+  let router = createBrowserRouter(routes);
 
 
   const Children = <AppContextProvider router={router} serverData={props.data}>{{htmlComponent}}</AppContextProvider>;
@@ -46,7 +52,7 @@ if (typeof document !== "undefined") {
   const root = document.querySelector("#root");
   if (root) {
     const routes = [{{routes}}];
-    const serverData = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
-    hydrateRoot(root, <ClientApp routes={routes} data={serverData} />);
+    const {data={},settings={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
+    hydrateRoot(root, <ClientApp routes={routes} settings={settings} data={data} />);
   }
 }
