@@ -10,7 +10,7 @@ import chalk from "chalk";
 import { createFetchRequest } from "./utils";
 import { isPromise } from "util/types";
 import { createElement } from "react";
-import { formatClassName } from "../utils";
+import { formatClassName } from "../utils/text";
 
 export type ServerProps = {
   data?: any;
@@ -28,7 +28,7 @@ type ClientHandlerProps = {
   staticHandler: StaticHandler;
   AppComponent: any;
   route: string;
-  useRouter: boolean;
+  clientUseRouter: boolean;
 };
 
 export function clientHandler(
@@ -64,7 +64,7 @@ async function handleRequest(
   let serverData = null;
 
   const { handler } = options.handlerProps;
-  const { AppComponent, route, staticHandler, useRouter, staticRoutes } =
+  const { AppComponent, route, staticHandler, clientUseRouter, staticRoutes } =
     options.props;
 
   if (handler.getServerProps) {
@@ -87,20 +87,20 @@ async function handleRequest(
     serverData = propsData;
   }
 
-  let AppContainer = useRouter
-    ? await getAppWithRouter({
-        serverData,
-        AppComponent,
-        staticHandler,
-        req,
-      })
-    : getAppWithoutRouter({
+  // If client already have router, server mustn't include a router
+  let AppContainer = clientUseRouter
+    ? getAppWithoutRouter({
         serverData,
         AppComponent,
         staticRoutes,
         req,
+      })
+    : await getAppWithRouter({
+        serverData,
+        AppComponent,
+        staticHandler,
+        req,
       });
-
   const { pipe } = renderToPipeableStream(AppContainer, {
     bootstrapScripts: [`/static/${formatClassName(route)}.js`],
     onShellReady() {
@@ -120,12 +120,12 @@ function getAppWithoutRouter(props: {
   serverData: any;
   AppComponent: any;
 }) {
-  const { req, staticRoutes, serverData, AppComponent } = props;
+  const { staticRoutes, serverData, AppComponent } = props;
 
   let current = staticRoutes[0];
 
   return (
-    <AppComponent data={serverData} settings={{ useRouter: false }}>
+    <AppComponent data={serverData} settings={{ clientUseRouter: true }}>
       {current.Component ? createElement(current.Component) : current.element}
     </AppComponent>
   );

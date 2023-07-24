@@ -1,6 +1,4 @@
 import "ignore-styles";
-import fs from "fs";
-import path from "path";
 import chalk from "chalk";
 
 import { Express } from "express";
@@ -10,14 +8,10 @@ import { createStaticHandler } from "react-router-dom/server";
 import { clientHandler } from "./handler";
 import { bundleClientSSR } from "./bundler";
 
-import {
-  ClientRouteProps,
-  PathProps,
-  getRegisterPath,
-  sortPath,
-} from "./utils";
+import { ClientRouteProps } from "./utils";
 import { getAppComponent } from "./generator";
-import { formatClassName } from "../utils";
+import { formatClassName } from "../utils/text";
+import { RumboStaticRoute, resolveImports } from "../utils/route";
 
 type Props = {
   location: string;
@@ -27,7 +21,10 @@ type Props = {
   route: string;
   app: Express;
   debug?: boolean;
-  useRouter?: boolean
+  clientUseRouter?: boolean;
+  staticImports: null | {
+    [subRoute: string]: RumboStaticRoute;
+  };
 };
 
 const layoutRegex = /_layout$/i;
@@ -41,50 +38,41 @@ export default async function registerClientSSR(props: Props) {
     route,
     rootDir,
     location,
-    useRouter = true
+    clientUseRouter = false,
+    staticImports,
   } = props;
 
-  let paths: PathProps[] = [];
   debug && console.log(chalk.green(`[Client SSR]`, route));
 
-  async function registerPath(pathRoute: string, _path: string) {
-    for (let p of fs.readdirSync(_path)) {
-      const fileAbsPath = path.join(_path, p);
-      const filePath = path.join(route, pathRoute, p);
-
-      if (fs.statSync(fileAbsPath).isDirectory()) {
-        await registerPath(filePath, fileAbsPath);
-        continue;
-      }
-
-      if (fileAbsPath.match(/\.(js|ts|tsx|jsx)$/)) {
-        paths.push(
-          getRegisterPath({
-            filePath: fileAbsPath,
-            routePath: filePath,
-          })
-        );
-      }
-    }
-  }
-
-  await registerPath("", location);
-
-  paths = paths.sort(sortPath);
+  const paths: RumboStaticRoute[] = staticImports
+    ? Object.entries(staticImports).map(([, item]) => item)
+    : resolveImports({
+        route,
+        location,
+        type: "client",
+      }).map((item) => ({
+        ...item,
+        staticImport: require(item.filePath),
+      }));
 
   let routes: {
     [path: string]: ClientRouteProps;
   } = {};
 
   for (let p of paths) {
-    const pFilePath = p.filePath;
     const pHandlePath = p.handlePath;
 
-    if (pHandlePath === "/_context") {
+    if (!pHandlePath || pHandlePath === "/_context") {
       continue;
     }
 
-    const handler = require(pFilePath);
+    // debug &&
+    //   console.log(
+    //     `staticImports ssr ${formatClassName(pHandlePath)} (${pFilePath})`
+    //   );
+    const handler = p.staticImport;
+    // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
+    // require(pFilePath);
     const isLayout = layoutRegex.test(pHandlePath);
     let data = {};
 
@@ -128,7 +116,11 @@ export default async function registerClientSSR(props: Props) {
   );
 
   const staticHandler = createStaticHandler(staticRoutes);
-  const AppComponent = await getAppComponent({ rootDir, publicPath, route });
+  const AppComponent = (
+    staticImports
+      ? staticImports.__rumboClientSSR.staticImport
+      : getAppComponent({ rootDir, publicPath, route, debug })
+  ).default;
 
   // register paths
   Object.entries(routes).forEach(([r, props]) => {
@@ -139,11 +131,21 @@ export default async function registerClientSSR(props: Props) {
         staticHandler,
         AppComponent,
         route: r,
-        useRouter
+        clientUseRouter,
       })
     );
     debug && console.log(chalk.gray(`-`, r));
   });
 
-  await bundleClientSSR({ entries: paths, publicPath, routes, route, distDir });
+  if (!staticImports) {
+    debug && console.log(chalk.gray("Bundle client..."));
+    await bundleClientSSR({
+      entries: paths,
+      publicPath,
+      routes,
+      route,
+      distDir,
+      debug,
+    });
+  }
 }

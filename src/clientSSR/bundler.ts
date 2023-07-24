@@ -2,27 +2,33 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import webpack from "webpack";
-import { ClientRoutes, PathProps } from "./utils";
-import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
+
+import { ClientRoutes } from "./utils";
 import { rumboTempDir } from "../configs";
-import { formatClassName } from "../utils";
+import { formatClassName } from "../utils/text";
+import { ResolveImportProps, RumboStaticRoute } from "../utils/route";
+import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
 
 type Props = {
-  entries: PathProps[];
+  entries: ResolveImportProps[];
   publicPath?: string;
   routes: ClientRoutes;
   route: string;
   distDir: string;
+  debug: boolean;
 };
 
-export async function bundleClientSSR(props: Props) {
-  const { publicPath = "./public", routes, route, distDir } = props;
+export function bundleClientSSR(props: Props) {
 
-  const entries = props.entries.map((e) => ({
-    ...e,
-    name: formatClassName(e.handlePath),
-    filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
-  }));
+  const { publicPath = "./public", routes, route, distDir, debug } = props;
+  const entries = props.entries
+    // // remove __rumboClientSSR
+    // .filter((e) => e.handlePath)
+    .map((e) => ({
+      ...e,
+      name: formatClassName(e.handlePath),
+      filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
+    }));
 
   const templateEntry = fs.readFileSync(
     path.join(__dirname, "./templateClient.tpl"),
@@ -54,12 +60,17 @@ export async function bundleClientSSR(props: Props) {
   const entryPath = path.join(rumboTempDir, "rumboClient.tsx");
   fs.writeFileSync(entryPath, content);
 
-  // @ts-ignore
-  let dfConfigs = {};
   const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
-
+  // // @ts-ignore
+  let dfConfigs = {};
   try {
-    dfConfigs = (require(clientConfigPath)).default || {};
+    dfConfigs = require(clientConfigPath).default || {};
+    // debug &&
+    //   console.log(
+    //     `staticImports ssr.bundler.userConfigFile ${formatClassName(
+    //       route
+    //     )} (${clientConfigPath})`
+    //   );
   } catch (e) {
     // no client config
   }

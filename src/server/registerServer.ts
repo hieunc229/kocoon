@@ -1,8 +1,14 @@
-import fs from "fs";
-import path from "path";
 import chalk from "chalk";
 
 import { Express } from "express";
+import { formatClassName } from "../utils/text";
+import {
+  ResolveImportProps,
+  ResolveImportServerProps,
+  RumboStaticRoute,
+  resolveImports,
+  toStaticRoute,
+} from "../utils/route";
 
 type PathProps = {
   handlePath: string;
@@ -15,34 +21,43 @@ export default async function registerServer(options: {
   debug?: boolean;
   route: string;
   location: string;
+  staticImports: null | {
+    [subRoute: string]: RumboStaticRoute<ResolveImportServerProps>;
+  };
 }) {
-  const { app, location, route, debug = false } = options;
+  const { app, location, route, debug = false, staticImports } = options;
 
-  let paths: PathProps[] = [];
   debug && console.log(chalk.green(`[Server]`, route));
 
-  async function registerPath(ppath: string, _path: string) {
-    for (let p of fs.readdirSync(_path)) {
-      const filePath = path.join(_path, p);
-      const currentRoutePath = path.join(route, ppath, p);
+  // let paths: PathProps[] = [];
+  // async function registerPath(ppath: string, _path: string) {
+  //   for (let p of fs.readdirSync(_path)) {
+  //     const filePath = path.join(_path, p);
+  //     const currentRoutePath = path.join(route, ppath, p);
 
-      if (fs.statSync(filePath).isDirectory()) {
-        await registerPath(path.join(ppath, p), filePath);
-        continue;
-      }
+  //     if (fs.statSync(filePath).isDirectory()) {
+  //       await registerPath(path.join(ppath, p), filePath);
+  //       continue;
+  //     }
 
-      paths.push(
-        getRegisterPath({
-          filePath,
-          routePath: currentRoutePath,
-        })
-      );
-    }
-  }
+  //     paths.push(
+  //       getRegisterPath({
+  //         filePath,
+  //         routePath: currentRoutePath,
+  //       })
+  //     );
+  //   }
+  // }
 
-  await registerPath("", location);
+  // await registerPath("", location);
 
-  paths = paths.sort(sortPath);
+  const paths = staticImports
+    ? Object.entries(staticImports).map(([, item]) => item)
+    : resolveImports<ResolveImportServerProps>({
+        route,
+        location,
+        type: "server",
+      }).map(toStaticRoute);
 
   paths.forEach((p, i, list) => {
     let found = list.findIndex((li) => li.handlePath === p.handlePath);
@@ -60,7 +75,13 @@ export default async function registerServer(options: {
     const pFilePath = p.filePath;
     const pHandlePath = p.handlePath;
 
-    const handlers = require(pFilePath);
+    debug &&
+      console.log(
+        `staticImports server ${formatClassName(pHandlePath)} (${pFilePath})`
+      );
+    const handlers = p.staticImport;
+    // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
+    // require(pFilePath);
 
     if (typeof handlers.default === "function") {
       app[
@@ -93,8 +114,8 @@ function sortPath(a: PathProps, b: PathProps) {
   return a.handlePath.localeCompare(b.handlePath);
 }
 
-function getRegisterPath(options: { filePath: string; routePath: string }) {
-  const { filePath, routePath } = options;
+function transformPath(options: ResolveImportProps) {
+  const { filePath, handlePath: routePath } = options;
   let parts = (routePath.split(".").shift() || "").split("/");
   let method = parts.pop();
   const name = parts.join("/");
@@ -105,7 +126,8 @@ function getRegisterPath(options: { filePath: string; routePath: string }) {
     method = "use";
   }
 
-  const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
+  const handlePath =
+    name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
 
   return {
     handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
@@ -113,3 +135,25 @@ function getRegisterPath(options: { filePath: string; routePath: string }) {
     filePath,
   };
 }
+
+// function getRegisterPath(options: { filePath: string; routePath: string }) {
+//   const { filePath, routePath } = options;
+//   let parts = (routePath.split(".").shift() || "").split("/");
+//   let method = parts.pop();
+//   const name = parts.join("/");
+
+//   if (!method || method === "index") {
+//     method = "get";
+//   } else if (method === "_middleware") {
+//     method = "use";
+//   }
+
+//   const handlePath =
+//     name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
+
+//   return {
+//     handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
+//     method,
+//     filePath,
+//   };
+// }

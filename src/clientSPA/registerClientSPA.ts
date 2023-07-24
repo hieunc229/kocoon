@@ -5,7 +5,8 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 
 import { Express } from "express";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
-import { formatClassName } from "../utils";
+import { formatClassName } from "../utils/text";
+import { RumboStaticRoute } from "../utils/route";
 
 type Props = {
   location: string;
@@ -14,10 +15,20 @@ type Props = {
   route: string;
   app: Express;
   debug?: boolean;
+  staticImports: null | {
+    [subRoute: string]: RumboStaticRoute;
+  };
 };
 
 export default async function registerClientSPA(props: Props): Promise<any> {
-  const { app, publicPath = "./public", location, distDir, route, debug } = props;
+  const {
+    app,
+    publicPath = "./public",
+    location,
+    distDir,
+    route,
+    debug,
+  } = props;
 
   app.get(`${route}*`, function (_, res) {
     res.sendFile(path.join(distDir, route, "index.html"));
@@ -27,9 +38,12 @@ export default async function registerClientSPA(props: Props): Promise<any> {
 
   let dfConfigs = {};
   const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
-
   try {
     dfConfigs = require(clientConfigPath).default || {};
+    debug &&
+      console.log(
+        `staticImports spa.userConfigFile ${formatClassName(route)} (${clientConfigPath})`
+      );
   } catch (e) {
     // no client config
   }

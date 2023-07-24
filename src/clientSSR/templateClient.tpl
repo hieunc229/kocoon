@@ -30,7 +30,7 @@ function ClientApp(props: Props) {
         errorElement: <ErrorBoundary />,
       }))
 
-    if (props.settings.useRouter === false) {
+    if (props.settings.clientUseRouter) {
       const currentRoute = routes[0];
       return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
     }

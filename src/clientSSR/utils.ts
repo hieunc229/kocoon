@@ -12,29 +12,6 @@ export type ClientRouteProps = {
 
 export type ClientRoutes = { [path: string]: ClientRouteProps };
 
-export type PathProps = {
-  handlePath: string;
-  filePath: string;
-};
-
-export function sortPath(a: PathProps, b: PathProps) {
-  return a.handlePath.localeCompare(b.handlePath);
-}
-
-export function getRegisterPath(options: {
-  filePath: string;
-  routePath: string;
-}) {
-  const { filePath, routePath } = options;
-  let [name = ""] = routePath.split(".");
-  const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1");
-
-  return {
-    handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
-    filePath,
-  };
-}
-
 export function createFetchRequest(req: ExpressRequest) {
   let origin = `${req.protocol}://${req.get("host")}`;
   let url = new URL(req.originalUrl || req.url, origin);

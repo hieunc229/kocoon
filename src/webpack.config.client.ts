@@ -1,6 +1,6 @@
 import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import { formatClassName } from "./utils";
+import { formatClassName } from "./utils/text";
 
 export type WebpackMode = "none" | "development" | "production";
 type Props = {

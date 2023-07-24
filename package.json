@@ -1,12 +1,12 @@
 {
   "name": "rumbo",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Build fullstack apps, powered by ExpressJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "publish": "cp package.json dist/package.json && cd dist && npm publish && cd .."
+    "publish": "cp package.json dist/package.json && cp README.md dist/README.md && cd dist && npm publish && cd .."
   },
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
   "author": "Hieu C. Nguyen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hieunc229/express-route/issues"
+    "url": "https://github.com/hieunc229/rumbo/issues"
   },
-  "homepage": "https://github.com/hieunc229/express-route#readme"
+  "homepage": "https://github.com/hieunc229/rumbo#readme"
 }

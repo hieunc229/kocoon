@@ -1,16 +1,17 @@
 import fs from "fs";
 import path from "path";
 import { rumboTempDir } from "../configs";
-import { formatClassName } from "../utils";
+import { formatClassName } from "../utils/text";
+import chalk from "chalk";
 
 export function generateApp(props: {
   publicPath: string;
   componentPath?: string;
   templatePath?: string;
-  route: string
+  route: string;
+  debug: boolean;
 }) {
-  
-  const { publicPath, templatePath, componentPath, route } = props;
+  const { publicPath, templatePath, componentPath, route, debug } = props;
 
   const htmlTemplate = fs.readFileSync(
     templatePath || `${publicPath}/index.html`,
@@ -36,11 +37,22 @@ export function generateApp(props: {
       .replace("<meta charset=", "<meta charSet=")
       // fix link doesn't have closing tag
       .replace(`rel="stylesheet"></head>`, `rel="stylesheet"/></head>`)
-      .replace("</head>", `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" /></head>`)
-      // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
+      .replace(
+        "</head>",
+        `<link href="/static/${formatClassName(
+          route
+        )}.css" rel="stylesheet" /></head>`
+      )
+    // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
   );
 
   const appClassPath = componentPath || path.join(rumboTempDir, "rumboApp.tsx");
+
+  if (!fs.existsSync(rumboTempDir)) {
+    fs.mkdirSync(rumboTempDir);
+    debug && console.log(chalk.gray("...create", rumboTempDir));
+  }
+
   fs.writeFileSync(appClassPath, appClassContent);
 
   return { appClassPath, htmlTemplate };
@@ -51,19 +63,27 @@ export function getAppComponent(props: {
   rootDir: string;
   publicPath: string;
   templatePath?: string;
-  route: string
+  route: string;
+  debug: boolean;
 }) {
-  const { rootDir, route } = props;
+  const { rootDir, route, debug } = props;
 
-  const componentPath = path.join(rootDir, "..", rumboTempDir, `clientEntry${formatClassName(route)}.tsx`);
+  const componentPath = path.join(
+    rootDir,
+    "..",
+    rumboTempDir,
+    `clientEntry${formatClassName(route)}.tsx`
+  );
 
   if (!fs.existsSync(componentPath)) {
     generateApp({
       ...props,
       componentPath,
-      route
+      route,
     });
   }
 
-  return require(componentPath).default;
+  // debug && console.log(`staticImports ssr.generate(missing) ${componentPath}`);
+
+  return require(componentPath);
 }
