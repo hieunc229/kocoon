@@ -24,16 +24,16 @@ function ErrorBoundary() {
 
 function ClientApp(props: Props) {
   const routes = props.routes.map((r) => ({
-        path: r.path,
-        element: r.element,
-        Component: r.Component,
-        errorElement: <ErrorBoundary />,
-      }))
+    path: r.path,
+    element: r.element,
+    Component: r.Component,
+    errorElement: <ErrorBoundary />,
+  }))
 
-    if (props.settings.clientUseRouter) {
-      const currentRoute = routes[0];
-      return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
-    }
+  if (props.settings.clientUseRouter) {
+    const currentRoute = routes.find(item => item.path === props.settings.path);
+    return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
+  }
   let router = createBrowserRouter(routes);
 
 

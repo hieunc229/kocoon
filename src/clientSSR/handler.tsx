@@ -11,6 +11,7 @@ import { createFetchRequest } from "./utils";
 import { isPromise } from "util/types";
 import { createElement } from "react";
 import { formatClassName } from "../utils/text";
+import { RouteObject } from "react-router-dom";
 
 export type ServerProps = {
   data?: any;
@@ -24,7 +25,7 @@ export type HandlerProps = {
 };
 
 type ClientHandlerProps = {
-  staticRoutes: any[];
+  staticRoutes: RouteObject[];
   staticHandler: StaticHandler;
   AppComponent: any;
   route: string;
@@ -116,16 +117,15 @@ async function handleRequest(
 
 function getAppWithoutRouter(props: {
   req: ExpressReq;
-  staticRoutes: any[];
+  staticRoutes: RouteObject[];
   serverData: any;
   AppComponent: any;
 }) {
-  const { staticRoutes, serverData, AppComponent } = props;
+  const { req, staticRoutes, serverData, AppComponent } = props;
 
-  let current = staticRoutes[0];
-
+  let current = staticRoutes.find(item => item.path === req.route.path) || staticRoutes[0];
   return (
-    <AppComponent data={serverData} settings={{ clientUseRouter: true }}>
+    <AppComponent data={serverData} settings={{ clientUseRouter: true, path: req.route.path  }}>
       {current.Component ? createElement(current.Component) : current.element}
     </AppComponent>
   );

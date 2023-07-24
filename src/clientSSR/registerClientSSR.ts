@@ -3,6 +3,7 @@ import chalk from "chalk";
 
 import { Express } from "express";
 import { createElement } from "react";
+import { RouteObject } from "react-router-dom";
 import { createStaticHandler } from "react-router-dom/server";
 
 import { clientHandler } from "./handler";
@@ -96,7 +97,7 @@ export default async function registerClientSSR(props: Props) {
     routes[rname] = Object.assign({}, routes[rname], data);
   }
 
-  const staticRoutes = Object.entries(routes).map(
+  const staticRoutes: RouteObject[] = Object.entries(routes).map(
     ([route, { layout, handler }]): any => {
       if (layout) {
         return {

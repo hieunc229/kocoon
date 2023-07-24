@@ -66,7 +66,7 @@ export function getAppComponent(props: {
   route: string;
   debug: boolean;
 }) {
-  const { rootDir, route, debug } = props;
+  const { rootDir, route } = props;
 
   const componentPath = path.join(
     rootDir,
