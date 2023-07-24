@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
+import chalk from "chalk";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import chalk from "chalk";
 
-export function generateApp(props: {
+export default function generateApp(props: {
   publicPath: string;
   componentPath?: string;
   templatePath?: string;
@@ -21,7 +21,7 @@ export function generateApp(props: {
   );
 
   const appTemplate = fs.readFileSync(
-    path.join(__dirname, "./templateEntry.tpl"),
+    path.join(__dirname, "../templates/templateEntry.tpl"),
     {
       encoding: "utf-8",
     }
@@ -79,7 +79,6 @@ export function getAppComponent(props: {
     generateApp({
       ...props,
       componentPath,
-      route,
     });
   }
 

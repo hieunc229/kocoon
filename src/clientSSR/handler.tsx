@@ -32,7 +32,7 @@ type ClientHandlerProps = {
   clientUseRouter: boolean;
 };
 
-export function clientHandler(
+export default function createClientSSRRequest(
   handlerProps: {
     handler: HandlerProps;
     layout?: HandlerProps;
@@ -123,9 +123,15 @@ function getAppWithoutRouter(props: {
 }) {
   const { req, staticRoutes, serverData, AppComponent } = props;
 
-  let current = staticRoutes.find(item => item.path === req.route.path) || staticRoutes[0];
+  let current =
+    staticRoutes.find((item) => item.path === req.route.path) ||
+    staticRoutes[0];
+
   return (
-    <AppComponent data={serverData} settings={{ clientUseRouter: true, path: req.route.path  }}>
+    <AppComponent
+      data={serverData}
+      settings={{ clientUseRouter: true, path: req.route.path }}
+    >
       {current.Component ? createElement(current.Component) : current.element}
     </AppComponent>
   );

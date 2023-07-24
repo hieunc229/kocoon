@@ -23,6 +23,7 @@ function ErrorBoundary() {
 }
 
 function ClientApp(props: Props) {
+  
   const routes = props.routes.map((r) => ({
     path: r.path,
     element: r.element,
@@ -34,9 +35,8 @@ function ClientApp(props: Props) {
     const currentRoute = routes.find(item => item.path === props.settings.path);
     return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
   }
-  let router = createBrowserRouter(routes);
 
-
+  const router = createBrowserRouter(routes);
   const Children = <AppContextProvider router={router} serverData={props.data}>{{htmlComponent}}</AppContextProvider>;
 
   if (typeof __context !== "undefined") {
@@ -52,7 +52,9 @@ if (typeof document !== "undefined") {
   const root = document.querySelector("#root");
   if (root) {
     const routes = [{{routes}}];
-    const {data={},settings={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
+    const {data={},settings={},globalData={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
+
+    Object.entries(globalData).forEach(([k,v]) => window[k].value);
     hydrateRoot(root, <ClientApp routes={routes} settings={settings} data={data} />);
   }
 }

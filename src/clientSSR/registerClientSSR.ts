@@ -6,13 +6,11 @@ import { createElement } from "react";
 import { RouteObject } from "react-router-dom";
 import { createStaticHandler } from "react-router-dom/server";
 
-import { clientHandler } from "./handler";
-import { bundleClientSSR } from "./bundler";
+import bundleClientSSR from "./bundler";
+import createClientSSRRequest from "./handler";
 
-import { ClientRouteProps } from "./utils";
-import { getAppComponent } from "./generator";
-import { formatClassName } from "../utils/text";
-import { RumboStaticRoute, resolveImports } from "../utils/route";
+import getAppComponent from "./generator";
+import { RumboStaticRoute, importPathsToClientRoutes, resolveImports } from "../utils/route";
 
 type Props = {
   location: string;
@@ -28,7 +26,6 @@ type Props = {
   };
 };
 
-const layoutRegex = /_layout$/i;
 
 export default async function registerClientSSR(props: Props) {
   const {
@@ -56,46 +53,7 @@ export default async function registerClientSSR(props: Props) {
         staticImport: require(item.filePath),
       }));
 
-  let routes: {
-    [path: string]: ClientRouteProps;
-  } = {};
-
-  for (let p of paths) {
-    const pHandlePath = p.handlePath;
-
-    if (!pHandlePath || pHandlePath === "/_context") {
-      continue;
-    }
-
-    // debug &&
-    //   console.log(
-    //     `staticImports ssr ${formatClassName(pHandlePath)} (${pFilePath})`
-    //   );
-    const handler = p.staticImport;
-    // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
-    // require(pFilePath);
-    const isLayout = layoutRegex.test(pHandlePath);
-    let data = {};
-
-    let rname = pHandlePath;
-
-    if (isLayout) {
-      rname = pHandlePath.replace(layoutRegex, "");
-      data = {
-        layout: handler,
-        layoutName: formatClassName(p.handlePath),
-        layoutPath: p.filePath.replace(/\.(js|ts|tsx)$/g, ""),
-      };
-    } else {
-      data = {
-        handler,
-        handlerName: formatClassName(p.handlePath),
-        handlerPath: p.filePath.replace(/\.(js|ts|tsx)$/g, ""),
-      };
-    }
-
-    routes[rname] = Object.assign({}, routes[rname], data);
-  }
+ const routes = importPathsToClientRoutes({ paths });
 
   const staticRoutes: RouteObject[] = Object.entries(routes).map(
     ([route, { layout, handler }]): any => {
@@ -120,14 +78,14 @@ export default async function registerClientSSR(props: Props) {
   const AppComponent = (
     staticImports
       ? staticImports.__rumboClientSSR.staticImport
-      : getAppComponent({ rootDir, publicPath, route, debug })
+      : getAppComponent({ publicPath, route, debug })
   ).default;
 
   // register paths
   Object.entries(routes).forEach(([r, props]) => {
     app.get(
       r,
-      clientHandler(props, {
+      createClientSSRRequest(props, {
         staticRoutes,
         staticHandler,
         AppComponent,

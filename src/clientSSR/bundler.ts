@@ -6,7 +6,7 @@ import webpack from "webpack";
 import { ClientRoutes } from "./utils";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import { ResolveImportProps, RumboStaticRoute } from "../utils/route";
+import { ResolveImportProps } from "../utils/route";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
 
 type Props = {
@@ -16,11 +16,17 @@ type Props = {
   route: string;
   distDir: string;
   debug: boolean;
+  webpackConfigs?: webpack.Configuration;
 };
 
-export function bundleClientSSR(props: Props) {
-
-  const { publicPath = "./public", routes, route, distDir, debug } = props;
+export default function bundleClientSSR(props: Props) {
+  const {
+    publicPath = "./public",
+    routes,
+    route,
+    distDir,
+    webpackConfigs,
+  } = props;
   const entries = props.entries
     // // remove __rumboClientSSR
     // .filter((e) => e.handlePath)
@@ -31,7 +37,7 @@ export function bundleClientSSR(props: Props) {
     }));
 
   const templateEntry = fs.readFileSync(
-    path.join(__dirname, "./templateClient.tpl"),
+    path.join(__dirname, "../templates/templateClient.tpl"),
     {
       encoding: "utf-8",
     }
@@ -57,6 +63,10 @@ export function bundleClientSSR(props: Props) {
         .join(",")
     );
 
+  if (!fs.existsSync(rumboTempDir)) {
+    fs.mkdirSync(rumboTempDir);
+  }
+
   const entryPath = path.join(rumboTempDir, "rumboClient.tsx");
   fs.writeFileSync(entryPath, content);
 
@@ -76,7 +86,9 @@ export function bundleClientSSR(props: Props) {
   }
 
   let mode: WebpackMode =
-    (process.env.NODE_ENV as WebpackMode) || "development";
+    webpackConfigs?.mode ||
+    (process.env.NODE_ENV as WebpackMode) ||
+    "development";
 
   const clientConfigs = getWebpackReactConfigs({
     mode,

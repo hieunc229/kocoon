@@ -29,12 +29,13 @@ export type RumboAppConfigs = RumboAppProps & {
   route: string;
 };
 
+export type RumboRouteProps ={ [route: string]: RumboAppProps }
 export type RumboProps = {
   debug?: boolean;
   publicDir?: string;
   distDir?: string;
   rootDir?: string;
-  routes: { [route: string]: RumboAppProps };
+  routes: RumboRouteProps;
   staticRoutes: null | {
     [route: string]: { [subRoute: string]: RumboStaticRoute };
   };
