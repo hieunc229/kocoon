@@ -85,12 +85,12 @@ export default async function bundleClientSPA(
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
       if (err) {
-        console.log(chalk.red("Packing error", err.toString()));
+        console.log(chalk.red("Packing clientSPA error", err.toString()));
         return reject(err);
       }
 
       if (stats?.compilation.errors.length) {
-        console.log(chalk.red("Packing error"));
+        console.log(chalk.red("Packing clientSPA error"));
         stats?.compilation.errors.forEach((err) => {
           console.log(chalk.red("- ", err.message));
         });
