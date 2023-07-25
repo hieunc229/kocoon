@@ -14,8 +14,15 @@ export function staticMiddleware(props: {
     let allowedExts = extensions.split(",");
   
     return function (req: Request, res: Response, next: NextFunction) {
+
       const parts = req.path.split(".");
       const ext = parts.pop();
+
+      // // rewrite index
+      // if (req.path.match(/index.html$/)) {
+      //   return res.sendFile(path.join(location, "index.html"));
+      // }
+
       if (parts.length && ext && allowedExts.indexOf(ext) !== -1) {
         return res.sendFile(path.join(location, req.path));
       }
