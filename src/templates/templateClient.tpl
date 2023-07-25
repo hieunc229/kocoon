@@ -54,7 +54,7 @@ if (typeof document !== "undefined") {
     const routes = [{{routes}}];
     const {data={},settings={},globalData={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
 
-    Object.entries(globalData).forEach(([k,v]) => window[k].value);
+    Object.entries(globalData).forEach(([k,v]) => window[k] = v);
     hydrateRoot(root, <ClientApp routes={routes} settings={settings} data={data} />);
   }
 }
