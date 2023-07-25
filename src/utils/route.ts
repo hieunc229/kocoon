@@ -33,7 +33,7 @@ export function resolveImports<T = ResolveImportProps>(options: {
   function registerPath(pathRoute: string, _path: string) {
     for (let p of fs.readdirSync(_path)) {
       const fileAbsPath = path.join(_path, p);
-      const filePath = path.join(route, pathRoute, p);
+      const filePath = path.join(route, pathRoute.replace(route, ""), p);
 
       if (fs.statSync(fileAbsPath).isDirectory()) {
         registerPath(filePath, fileAbsPath);
@@ -147,7 +147,7 @@ export function importPathsToClientRoutes(props: {
     let rname = pHandlePath;
 
     if (isLayout) {
-      rname = pHandlePath.replace(layoutRegex, "");
+      // rname = pHandlePath.replace(layoutRegex, "");
       data = {
         layout: handler,
         layoutName: formatClassName(p.handlePath),
