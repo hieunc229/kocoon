@@ -7,16 +7,21 @@ type Props = {
   mode?: WebpackMode;
   publicPath: string;
   entry: string[];
-  route: string
+  route: string;
 };
-export function getWebpackReactConfigs(props: Props) {
+export function getWebpackReactConfigs(props: Props): webpack.Configuration {
   const { mode, entry, route } = props;
 
   const configs: webpack.Configuration = {
     mode,
+    // devtool: mode === "development" ? "#source-map" : false,
     entry,
     module: {
       rules: [
+        // {
+        //   test: /\.(png|svg|jpg|gif|ico)$/i,
+        //   type: 'asset',
+        // },
         {
           test: /\.(tsx|ts|js|jsx)?$/,
           exclude: /node_modules/,
@@ -28,7 +33,7 @@ export function getWebpackReactConfigs(props: Props) {
                 "@babel/preset-typescript",
                 "@babel/preset-env",
                 "@babel/preset-flow",
-              ]
+              ],
             },
           },
         },
@@ -42,7 +47,10 @@ export function getWebpackReactConfigs(props: Props) {
                 esModule: false,
               },
             },
-            "css-loader",
+            {
+              loader: "css-loader",
+              options: { url: false },
+            },
             "sass-loader",
             "postcss-loader",
           ],
@@ -60,6 +68,10 @@ export function getWebpackReactConfigs(props: Props) {
         filename: `${formatClassName(route)}.css`,
       }),
     ],
+    optimization: {
+      usedExports: true,
+      // getServerProps: false
+    },
   };
   return configs;
 }
