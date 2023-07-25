@@ -1,4 +1,3 @@
-import "ignore-styles";
 import chalk from "chalk";
 
 import { Express } from "express";
@@ -9,8 +8,12 @@ import { createStaticHandler } from "react-router-dom/server";
 import bundleClientSSR from "./bundler";
 import createClientSSRRequest from "./handler";
 
-import getAppComponent from "./generator";
-import { RumboStaticRoute, importPathsToClientRoutes, resolveImports } from "../utils/route";
+import { getAppComponent } from "./generator";
+import {
+  RumboStaticRoute,
+  importPathsToClientRoutes,
+  resolveImports,
+} from "../utils/route";
 
 type Props = {
   location: string;
@@ -25,7 +28,6 @@ type Props = {
     [subRoute: string]: RumboStaticRoute;
   };
 };
-
 
 export default async function registerClientSSR(props: Props) {
   const {
@@ -53,7 +55,7 @@ export default async function registerClientSSR(props: Props) {
         staticImport: require(item.filePath),
       }));
 
- const routes = importPathsToClientRoutes({ paths });
+  const routes = importPathsToClientRoutes({ paths });
 
   const staticRoutes: RouteObject[] = Object.entries(routes).map(
     ([route, { layout, handler }]): any => {
@@ -78,7 +80,7 @@ export default async function registerClientSSR(props: Props) {
   const AppComponent = (
     staticImports
       ? staticImports.__rumboClientSSR.staticImport
-      : getAppComponent({ publicPath, route, debug })
+      : getAppComponent({ publicPath, route, debug, rootDir })
   ).default;
 
   // register paths
