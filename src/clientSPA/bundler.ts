@@ -3,6 +3,7 @@ import chalk from "chalk";
 import webpack from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 
+import { merge } from "webpack-merge";
 import { formatClassName } from "../utils/text";
 import { RumboStaticRoute } from "../utils/route";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
@@ -59,41 +60,43 @@ export default async function bundleClientSPA(
     route,
   });
 
-  const configs: webpack.Configuration = Object.assign(
-    {},
-    dfConfigs,
+  const configs: webpack.Configuration = merge(
     clientConfigs,
     {
-      mode,
       output: {
         path: path.join(distDir, "static"),
         filename: `${formatClassName(route)}.js`,
-        publicPath: "/",
+        publicPath: "/static",
       },
       plugins: [
         new HtmlWebpackPlugin({
+          filename: path.join(distDir, route, "index.html"),
           template: path.join(distDir, "index.html"),
         }),
-        ...(clientConfigs.plugins || []),
       ],
-    }
+    },
+    dfConfigs
   );
 
-  debug && console.log(chalk.green(`[Client SSR]`, route));
+  debug && console.log(chalk.green(`[Client SPA]`, route));
 
   const compiler = webpack(configs);
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
       if (err) {
-        console.log(chalk.red("Packing clientSPA error", err.toString()));
+        console.log(chalk.red("Packing clientSPA error: ", err.toString()));
         return reject(err);
       }
 
       if (stats?.compilation.errors.length) {
         console.log(chalk.red("Packing clientSPA error"));
-        stats?.compilation.errors.forEach((err) => {
-          console.log(chalk.red("- ", err.message));
+        let errorStr = "";
+        stats.compilation.errors.forEach((err, i) => {
+          errorStr += `--- Error ${i + 1} ---\n: ${
+            err.stack
+          }\n--- End of error ${i + 1} ---\n`;
         });
+        console.log(chalk.red(errorStr));
         return reject(`Failed`);
       }
 
