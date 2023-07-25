@@ -12,6 +12,7 @@ import { getAppComponent } from "./generator";
 import {
   RumboStaticRoute,
   importPathsToClientRoutes,
+  layoutRegex,
   resolveImports,
 } from "../utils/route";
 
@@ -50,21 +51,26 @@ export default async function registerClientSSR(props: Props) {
         route,
         location,
         type: "client",
-      }).map((item) => ({
-        ...item,
-        staticImport: require(item.filePath),
-      }));
+      }).map((item) => {
+        return {
+          ...item,
+          staticImport: require(item.filePath),
+        };
+      });
 
   const routes = importPathsToClientRoutes({ paths });
-
-  const staticRoutes: RouteObject[] = Object.entries(routes).map(
-    ([route, { layout, handler }]): any => {
-      if (layout) {
+  const staticRoutes: RouteObject[] = Object.entries(routes)
+    .filter((item) => !layoutRegex.test(item[0]))
+    .map(([route, { handler }]): any => {
+      const layoutHandler =
+        routes[route.replace(/\/[a-z:0-9_]+$/, "/_layout")] ||
+        routes[`${route}/_layout`];
+      if (layoutHandler?.layout) {
         return {
           path: route,
           element: createElement(
-            layout.default,
-            null,
+            layoutHandler.layout.default,
+            handler.layoutProps,
             createElement(handler.default)
           ),
         };
@@ -73,8 +79,7 @@ export default async function registerClientSSR(props: Props) {
         path: route,
         Component: handler.default,
       };
-    }
-  );
+    });
 
   const staticHandler = createStaticHandler(staticRoutes);
   const AppComponent = (
@@ -91,7 +96,7 @@ export default async function registerClientSSR(props: Props) {
         staticRoutes,
         staticHandler,
         AppComponent,
-        route: r,
+        route,
         clientUseRouter,
       })
     );

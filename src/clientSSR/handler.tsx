@@ -15,12 +15,14 @@ import { RouteObject } from "react-router-dom";
 
 export type ServerProps = {
   data?: any;
+  globalData?: any;
   status?: number;
   redirect?: string;
 };
 
 export type HandlerProps = {
   default: any;
+  layoutProps?: { [name:string]: any },
   getServerProps?: (req: ExpressReq) => ServerProps | Promise<ServerProps>;
 };
 
@@ -63,6 +65,7 @@ async function handleRequest(
   res: Response
 ) {
   let serverData = null;
+  let globalData = null;
 
   const { handler } = options.handlerProps;
   const { AppComponent, route, staticHandler, clientUseRouter, staticRoutes } =
@@ -74,6 +77,7 @@ async function handleRequest(
       redirect,
       status,
       data: propsData,
+      globalData: __globalData,
     } = (isPromise(fn) ? await fn : fn) as ServerProps;
 
     if (status) {
@@ -85,6 +89,7 @@ async function handleRequest(
       return;
     }
 
+    globalData = __globalData;
     serverData = propsData;
   }
 
@@ -94,14 +99,17 @@ async function handleRequest(
         serverData,
         AppComponent,
         staticRoutes,
+        globalData,
         req,
       })
     : await getAppWithRouter({
         serverData,
         AppComponent,
         staticHandler,
+        globalData,
         req,
       });
+      
   const { pipe } = renderToPipeableStream(AppContainer, {
     bootstrapScripts: [`/static/${formatClassName(route)}.js`],
     onShellReady() {
@@ -119,9 +127,10 @@ function getAppWithoutRouter(props: {
   req: ExpressReq;
   staticRoutes: RouteObject[];
   serverData: any;
+  globalData: any;
   AppComponent: any;
 }) {
-  const { req, staticRoutes, serverData, AppComponent } = props;
+  const { req, staticRoutes, serverData, AppComponent, globalData } = props;
 
   let current =
     staticRoutes.find((item) => item.path === req.route.path) ||
@@ -130,6 +139,7 @@ function getAppWithoutRouter(props: {
   return (
     <AppComponent
       data={serverData}
+      globalData={globalData}
       settings={{ clientUseRouter: true, path: req.route.path }}
     >
       {current.Component ? createElement(current.Component) : current.element}
@@ -141,15 +151,16 @@ async function getAppWithRouter(props: {
   req: ExpressReq;
   staticHandler: StaticHandler;
   serverData: any;
+  globalData: any;
   AppComponent: any;
 }) {
-  const { req, staticHandler, serverData, AppComponent } = props;
+  const { req, staticHandler, serverData, AppComponent, globalData } = props;
   const fetchRequest = createFetchRequest(req);
   const context: any = await staticHandler.query(fetchRequest);
   const router = createStaticRouter(staticHandler.dataRoutes, context);
 
   return (
-    <AppComponent data={serverData}>
+    <AppComponent globalData={globalData} data={serverData}>
       <StaticRouterProvider context={context} router={router} />
     </AppComponent>
   );

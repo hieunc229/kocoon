@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import webpack from "webpack";
-
+import { merge } from "webpack-merge";
 import { ClientRoutes } from "./utils";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import { ResolveImportProps } from "../utils/route";
+import { ResolveImportProps, layoutRegex } from "../utils/route";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
 
 type Props = {
@@ -47,16 +47,23 @@ export default function bundleClientSSR(props: Props) {
     .replace(
       "{{imports}}",
       entries
-        .map((item) => `import ${item.name} from "${item.filePath}"`)
+        .map(
+          (item) =>
+            `import { default as ${item.name}, layoutProps as ${item.name}_layoutProps } from "${item.filePath}"`
+        )
         .join("\n")
     )
     .replace(/{{htmlComponent}}/g, "<RouterProvider router={router} />")
     .replace(
       "{{routes}}",
       Object.entries(routes)
+        .filter(([path]) => !layoutRegex.test(path))
         .map(([path, r]) => {
-          if (r.layoutName) {
-            return `{path:"${path}",element:createElement(${r.layoutName},null,createElement(${r.handlerName}))}`;
+          const layoutHandler =
+            routes[path.replace(/\/[a-z:0-9_]+$/, "/_layout")] ||
+            routes[`${path}/_layout`];
+          if (layoutHandler) {
+            return `{path:"${path}",element:createElement(${layoutHandler.layoutName},${r.handlerName}_layoutProps,createElement(${r.handlerName}))}`;
           }
           return `{path:"${path}",Component:${r.handlerName}}`;
         })
@@ -67,7 +74,10 @@ export default function bundleClientSSR(props: Props) {
     fs.mkdirSync(rumboTempDir);
   }
 
-  const entryPath = path.join(rumboTempDir, "rumboClient.tsx");
+  const entryPath = path.join(
+    rumboTempDir,
+    `rumboClient${formatClassName(route)}.tsx`
+  );
   fs.writeFileSync(entryPath, content);
 
   const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
@@ -97,9 +107,7 @@ export default function bundleClientSSR(props: Props) {
     route,
   });
 
-  const configs: webpack.Configuration = Object.assign(
-    {},
-    dfConfigs,
+  const configs: webpack.Configuration = merge(
     clientConfigs,
     {
       mode,
@@ -109,13 +117,12 @@ export default function bundleClientSSR(props: Props) {
         filename: `${formatClassName(route)}.js`,
       },
       resolve: {
-        ...clientConfigs.resolve,
         alias: {
-          ...clientConfigs.resolve?.alias,
           rumbo: path.resolve(__dirname, ".."),
         },
       },
-    }
+    },
+    dfConfigs
   );
 
   const compiler = webpack(configs);
@@ -123,15 +130,19 @@ export default function bundleClientSSR(props: Props) {
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
       if (err) {
-        console.log(chalk.red("Packing clientSSR error", err.toString()));
+        console.log(chalk.red("Packing clientSSR error: ", err.toString()));
         return reject(err);
       }
 
       if (stats?.compilation.errors.length) {
         console.log(chalk.red("Packing clientSSR error"));
-        stats?.compilation.errors.forEach((err) => {
-          console.log(chalk.red("- ", err.message));
+        let errorStr = "";
+        stats.compilation.errors.forEach((err, i) => {
+          errorStr += `--- Error ${i + 1} ---\n: ${
+            err.message.substring(0, 200) //err.stack
+          }\n--- End of error ${i + 1} ---\n`;
         });
+        console.log(chalk.red(errorStr));
         return reject(`Failed`);
       }
 

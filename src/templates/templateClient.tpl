@@ -6,10 +6,7 @@ import { AppContextProvider } from "rumbo/context";
 
 {{imports}}
 
-declare global {
-  let __context: any;
-}
-
+const __context = null;
 type Props = {
   routes: { path: string, Component?: any, element?: any }[],
   data: any,
@@ -39,7 +36,7 @@ function ClientApp(props: Props) {
   const router = createBrowserRouter(routes);
   const Children = <AppContextProvider router={router} serverData={props.data}>{{htmlComponent}}</AppContextProvider>;
 
-  if (typeof __context !== "undefined") {
+  if (__context) {
     return (<__context.Provider value={props.data}>{Children}</__context.Provider>)
   }
 

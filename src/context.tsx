@@ -49,7 +49,7 @@ export class AppContextProvider extends Component<Props> {
 
 export function useServerData() {
   const ctx = useContext(AppContext);
-  return ctx.serverData;
+  return ctx?.serverData || {};
 }
 
 export function useAppContext() {

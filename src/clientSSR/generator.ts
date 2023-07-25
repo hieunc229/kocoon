@@ -32,7 +32,7 @@ export default function generateApp(props: {
     htmlTemplate
       .replace(
         `<div id="root"></div>`,
-        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify({data,settings})}</div>`
+        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify({data,settings,globalData})}</div>`
       )
       .replace("<meta charset=", "<meta charSet=")
       // fix link doesn't have closing tag
@@ -72,7 +72,7 @@ export function getAppComponent(props: {
     rootDir,
     "..",
     rumboTempDir,
-    `clientEntry${formatClassName(route)}.tsx`
+    `rumboEntry${formatClassName(route)}.tsx`
   );
 
   if (!fs.existsSync(componentPath)) {
