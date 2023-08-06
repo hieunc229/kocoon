@@ -6,7 +6,11 @@ import { merge } from "webpack-merge";
 import { ClientRoutes } from "./utils";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import { ResolveImportProps, layoutRegex } from "../utils/route";
+import {
+  ResolveImportProps,
+  excludeRegex,
+  getLayoutRoute,
+} from "../utils/route";
 import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
 
 type Props = {
@@ -16,6 +20,7 @@ type Props = {
   route: string;
   distDir: string;
   debug: boolean;
+  rootDir: string;
   webpackConfigs?: webpack.Configuration;
 };
 
@@ -25,16 +30,16 @@ export default function bundleClientSSR(props: Props) {
     routes,
     route,
     distDir,
+    rootDir,
     webpackConfigs,
   } = props;
-  const entries = props.entries
-    // // remove __rumboClientSSR
-    // .filter((e) => e.handlePath)
-    .map((e) => ({
-      ...e,
-      name: formatClassName(e.handlePath),
-      filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
-    }));
+
+  const entries = props.entries.map((e) => ({
+    ...e,
+    import: require(e.filePath.replace(/\.(js|ts|tsx)$/g, "")),
+    name: formatClassName(e.handlePath),
+    filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
+  }));
 
   const templateEntry = fs.readFileSync(
     path.join(__dirname, "../templates/templateClient.tpl"),
@@ -49,7 +54,11 @@ export default function bundleClientSSR(props: Props) {
       entries
         .map(
           (item) =>
-            `import { default as ${item.name}, layoutProps as ${item.name}_layoutProps } from "${item.filePath}"`
+            `import { default as ${item.name}${
+              item.import.layoutProps
+                ? `, layoutProps as ${item.name}_layoutProps`
+                : ""
+            } } from "${item.filePath}"`
         )
         .join("\n")
     )
@@ -57,15 +66,18 @@ export default function bundleClientSSR(props: Props) {
     .replace(
       "{{routes}}",
       Object.entries(routes)
-        .filter(([path]) => !layoutRegex.test(path))
+        .filter(([path]) => !excludeRegex.test(path))
         .map(([path, r]) => {
-          const layoutHandler =
-            routes[path.replace(/\/[a-z:0-9_]+$/, "/_layout")] ||
-            routes[`${path}/_layout`];
+          const layoutHandler = getLayoutRoute(path, routes);
+          const routeProps = `routeProps["${path}"]?.props`;
           if (layoutHandler) {
-            return `{path:"${path}",element:createElement(${layoutHandler.layoutName},${r.handlerName}_layoutProps,createElement(${r.handlerName}))}`;
+            let entry = entries.find((item) => item.name === r.handlerName);
+            let layoutPropStr = entry?.import?.layoutProps
+              ? `${r.handlerName}_layoutProps`
+              : "null";
+            return `{path:"${path}",props:${routeProps},element:createElement(${layoutHandler.layoutName},${layoutPropStr},createElement(${r.handlerName},${routeProps})),errorBoundary:<ErrorBoundary/>}`;
           }
-          return `{path:"${path}",Component:${r.handlerName}}`;
+          return `{path:"${path}",Component:${r.handlerName},props:${routeProps},errorBoundary:<ErrorBoundary/>}`;
         })
         .join(",")
     );
@@ -80,11 +92,11 @@ export default function bundleClientSSR(props: Props) {
   );
   fs.writeFileSync(entryPath, content);
 
-  const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
+  const clientConfigPath = path.join(path.resolve("./"), "webpack.config.client");
   // // @ts-ignore
   let dfConfigs = {};
   try {
-    dfConfigs = require(clientConfigPath).default || {};
+    dfConfigs = require(clientConfigPath) || {};
     // debug &&
     //   console.log(
     //     `staticImports ssr.bundler.userConfigFile ${formatClassName(
@@ -139,10 +151,16 @@ export default function bundleClientSSR(props: Props) {
         let errorStr = "";
         stats.compilation.errors.forEach((err, i) => {
           errorStr += `--- Error ${i + 1} ---\n: ${
-            err.message.substring(0, 200) //err.stack
+            err.stack
+            // "stack"
           }\n--- End of error ${i + 1} ---\n`;
         });
         console.log(chalk.red(errorStr));
+        fs.writeFileSync(
+          path.join(rootDir, "rumbo.clientSSR-error.log"),
+          errorStr
+        );
+        console.log(chalk.red(`End packing clientSSR error`));
         return reject(`Failed`);
       }
 

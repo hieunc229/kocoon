@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import webpack from "webpack";
@@ -14,6 +15,7 @@ export type RumboBundleClientSPAProps = {
   distDir: string;
   route: string;
   debug?: boolean;
+  rootDir: string;
   staticImports: null | {
     [subRoute: string]: RumboStaticRoute;
   };
@@ -29,21 +31,23 @@ export default async function bundleClientSPA(
     distDir,
     route,
     debug,
+    rootDir,
     webpackConfigs,
   } = props;
 
   const entryPath = path.join(location, "index.tsx");
 
   let dfConfigs = {};
-  const clientConfigPath = path.join(process.cwd(), "webpack.config.client");
+  const clientConfigPath = path.join(path.resolve("./"), "webpack.config.client");
+
   try {
     dfConfigs = require(clientConfigPath).default || {};
-    debug &&
-      console.log(
-        `staticImports spa.userConfigFile ${formatClassName(
-          route
-        )} (${clientConfigPath})`
-      );
+    // debug &&
+    //   console.log(
+    //     `staticImports spa.userConfigFile ${formatClassName(
+    //       route
+    //     )} (${clientConfigPath})`
+    //   );
   } catch (e) {
     // no client config
   }
@@ -97,14 +101,28 @@ export default async function bundleClientSPA(
           }\n--- End of error ${i + 1} ---\n`;
         });
         console.log(chalk.red(errorStr));
+        fs.writeFileSync(
+          path.join(rootDir, "rumbo.clientSPA-error.log"),
+          errorStr
+        );
+
+        console.log(chalk.red(`End packing clientSPA error`));
         return reject(`Failed`);
       }
 
       if (stats?.compilation.warnings.length) {
         console.log(chalk.gray("Packing completed with warnings"));
-        stats?.compilation.warnings.forEach((err) => {
-          console.log(chalk.red("- ", err.message));
+        let errorStr = "";
+        stats?.compilation.warnings.forEach((err, i) => {
+          errorStr += `--- Error ${i + 1} ---\n: ${
+            err.stack
+          }\n--- End of warning ${i + 1} ---\n`;
         });
+        console.log(chalk.gray(errorStr));
+        fs.writeFileSync(
+          path.join(rootDir, "rumbo.clientSPA-warning.log"),
+          errorStr
+        );
         return acept({});
       }
 
