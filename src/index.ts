@@ -8,9 +8,8 @@ import registerClientSSR from "./clientSSR/registerClientSSR";
 import registerClientSPA from "./clientSPA/registerClientSPA";
 
 import { Express } from "express";
-import { formatClassName } from "./utils/text";
 import { staticMiddleware } from "./utils/handlers";
-import { ResolveImportServerProps, RumboStaticRoute } from "./utils/route";
+import { RumboStaticRoute } from "./utils/route";
 
 export type RumboAppType = "server" | "client-ssr" | "client-spa" | "static";
 
@@ -100,6 +99,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           publicPath,
           distDir,
           staticImports,
+          rootDir,
           ...client,
         });
         break;

@@ -75,10 +75,10 @@ export default async function registerServer(options: {
     const pFilePath = p.filePath;
     const pHandlePath = p.handlePath;
 
-    debug &&
-      console.log(
-        `staticImports server ${formatClassName(pHandlePath)} (${pFilePath})`
-      );
+    // debug &&
+    //   console.log(
+    //     `staticImports server ${formatClassName(pHandlePath)} (${pFilePath})`
+    //   );
     const handlers = p.staticImport;
     // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
     // require(pFilePath);

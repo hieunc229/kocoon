@@ -11,8 +11,9 @@ import createClientSSRRequest from "./handler";
 import { getAppComponent } from "./generator";
 import {
   RumboStaticRoute,
+  excludeRegex,
+  getLayoutRoute,
   importPathsToClientRoutes,
-  layoutRegex,
   resolveImports,
 } from "../utils/route";
 
@@ -60,11 +61,9 @@ export default async function registerClientSSR(props: Props) {
 
   const routes = importPathsToClientRoutes({ paths });
   const staticRoutes: RouteObject[] = Object.entries(routes)
-    .filter((item) => !layoutRegex.test(item[0]))
+    .filter((item) => !excludeRegex.test(item[0]))
     .map(([route, { handler }]): any => {
-      const layoutHandler =
-        routes[route.replace(/\/[a-z:0-9_]+$/, "/_layout")] ||
-        routes[`${route}/_layout`];
+      const layoutHandler = getLayoutRoute(route, routes);
       if (layoutHandler?.layout) {
         return {
           path: route,
@@ -90,6 +89,17 @@ export default async function registerClientSSR(props: Props) {
 
   // register paths
   Object.entries(routes).forEach(([r, props]) => {
+    let parts = r.split("/");
+    const name = parts.pop();
+    if (name === "_middleware") {
+      app.use(parts.join("/"), props.handler.default);
+      return;
+    }
+
+    if (!name || name[0] === `_`) {
+      return;
+    }
+
     app.get(
       r,
       createClientSSRRequest(props, {
@@ -98,6 +108,7 @@ export default async function registerClientSSR(props: Props) {
         AppComponent,
         route,
         clientUseRouter,
+        routes,
       })
     );
     debug && console.log(chalk.gray(`-`, r));
@@ -112,6 +123,7 @@ export default async function registerClientSSR(props: Props) {
       route,
       distDir,
       debug,
+      rootDir,
     });
   }
 }

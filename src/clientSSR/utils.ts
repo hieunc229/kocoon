@@ -1,10 +1,10 @@
-import { HandlerProps } from "./handler";
 import { Request as ExpressRequest } from "express";
 
 export type ClientRouteProps = {
   handler: HandlerProps;
   handlerName: string;
   handlerPath: string;
+  handlerProps?: any,
   layout?: HandlerProps;
   layoutName?: string;
   layoutPath?: string;

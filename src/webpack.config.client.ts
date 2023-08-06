@@ -12,9 +12,9 @@ type Props = {
 export function getWebpackReactConfigs(props: Props): webpack.Configuration {
   const { mode, entry, route } = props;
 
-  const configs: webpack.Configuration = {
+  let configs: webpack.Configuration = {
     mode,
-    // devtool: mode === "development" ? "#source-map" : false,
+    // devtool: mode === "development" ? "eval-cheap-source-map" : undefined,
     entry,
     module: {
       rules: [
@@ -69,9 +69,15 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
       }),
     ],
     optimization: {
+      minimize: true,
       usedExports: true,
       // getServerProps: false
     },
   };
+
+  if (mode === "development") {
+    configs.devtool = "inline-source-map";
+  }
+  
   return configs;
 }

@@ -32,7 +32,7 @@ export default function generateApp(props: {
     htmlTemplate
       .replace(
         `<div id="root"></div>`,
-        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify({data,settings,globalData})}</div>`
+        `<div id="root">{children}</div><div id="ssr-data" style={{ display: "none" }}>{JSON.stringify({data,settings,globalData,session,routeProps})}</div>`
       )
       .replace("<meta charset=", "<meta charSet=")
       // fix link doesn't have closing tag
