@@ -44,7 +44,7 @@ export function resolveImports<T = ResolveImportProps>(options: {
         paths.push(
           pathTransform({
             filePath: fileAbsPath,
-            routePath: filePath,
+            routePath: filePath.replace("[..]", "*"),
           }) as any
         );
       }
@@ -67,7 +67,11 @@ export function toStaticRoute<T = ResolveImportProps>(
 }
 
 function sortClientPath(a: ResolveImportProps, b: ResolveImportProps) {
-  return a.handlePath.localeCompare(b.handlePath);
+  if (a.handlePath.indexOf("*") !== -1 && b.handlePath.indexOf("*") == -1) {
+    return 1;
+  }
+
+  return b.handlePath.length - a.handlePath.length;
 }
 
 function sortServerPath(
@@ -77,7 +81,7 @@ function sortServerPath(
   if (a.handlePath === b.handlePath && a.method === "use") {
     return -1;
   }
-  return a.handlePath.localeCompare(b.handlePath);
+  return sortClientPath(a, b);
 }
 
 function getRegisterClientPath(options: {
@@ -120,6 +124,8 @@ function getRegisterServerPath(options: {
 }
 
 export const layoutRegex = /_layout$/i;
+export const excludeRegex = /_(layout|middleware|context)$/i;
+export const excludeWithoutLayoutRegex = /_(context|middleware)$/i;
 export function importPathsToClientRoutes(props: {
   paths: RumboStaticRoute[];
 }) {
@@ -130,24 +136,17 @@ export function importPathsToClientRoutes(props: {
   for (let p of props.paths) {
     const pHandlePath = p.handlePath;
 
-    if (!pHandlePath || pHandlePath === "/_context") {
+    if (!pHandlePath || excludeWithoutLayoutRegex.test(pHandlePath)) {
       continue;
     }
-
-    // debug &&
-    //   console.log(
-    //     `staticImports ssr ${formatClassName(pHandlePath)} (${pFilePath})`
-    //   );
+    
     const handler = p.staticImport;
-    // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
-    // require(pFilePath);
     const isLayout = layoutRegex.test(pHandlePath);
     let data = {};
 
     let rname = pHandlePath;
 
     if (isLayout) {
-      // rname = pHandlePath.replace(layoutRegex, "");
       data = {
         layout: handler,
         layoutName: formatClassName(p.handlePath),
@@ -165,4 +164,14 @@ export function importPathsToClientRoutes(props: {
   }
 
   return routes;
+}
+
+export function getLayoutRoute(
+  path: string,
+  routes: { [name: string]: ClientRouteProps }
+) {
+  return (
+    routes[`${path}/_layout`] ||
+    routes[path.replace(/\/[a-z:0-9_\:\*\-\_]+$/, "/_layout")]
+  );
 }

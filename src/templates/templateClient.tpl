@@ -8,9 +8,16 @@ import { AppContextProvider } from "rumbo/context";
 
 const __context = null;
 type Props = {
-  routes: { path: string, Component?: any, element?: any }[],
+  routes: { 
+    path: string, 
+    Component?: any,
+    element?: any,
+    props?: any
+  }[],
   data: any,
-  settings: any
+  settings: any,
+  session: any,
+  routeProps: any
 }
 
 function ErrorBoundary() {
@@ -21,23 +28,18 @@ function ErrorBoundary() {
 
 function ClientApp(props: Props) {
   
-  const routes = props.routes.map((r) => ({
-    path: r.path,
-    element: r.element,
-    Component: r.Component,
-    errorElement: <ErrorBoundary />,
-  }))
+  const routes = props.routes;
 
   if (props.settings.clientUseRouter) {
     const currentRoute = routes.find(item => item.path === props.settings.path);
-    return currentRoute.Component ? createElement(currentRoute.Component) : currentRoute.element
+    return currentRoute.element || createElement(currentRoute.Component, currentRoute.props)
   }
 
   const router = createBrowserRouter(routes);
-  const Children = <AppContextProvider router={router} serverData={props.data}>{{htmlComponent}}</AppContextProvider>;
+  const Children = <AppContextProvider router={router} session={props.session} serverData={props.data}>{{htmlComponent}}</AppContextProvider>;
 
   if (__context) {
-    return (<__context.Provider value={props.data}>{Children}</__context.Provider>)
+    return (<__context.Provider session={props.session} value={props.data}>{Children}</__context.Provider>)
   }
 
 
@@ -48,10 +50,10 @@ function ClientApp(props: Props) {
 if (typeof document !== "undefined") {
   const root = document.querySelector("#root");
   if (root) {
+    const {data={},settings={},globalData={}, session={},routeProps={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
     const routes = [{{routes}}];
-    const {data={},settings={},globalData={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
 
-    Object.entries(globalData).forEach(([k,v]) => window[k] = v);
-    hydrateRoot(root, <ClientApp routes={routes} settings={settings} data={data} />);
+    globalData && Object.entries(globalData).forEach(([k,v]) => window[k] = v);
+    hydrateRoot(root, <ClientApp routes={routes} settings={settings} routeProps={routeProps} session={session} data={data} />);
   }
 }
