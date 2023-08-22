@@ -1,21 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { ClientRouteProps } from "../clientSSR/utils";
 import { formatClassName } from "./text";
-
-export type ResolveImportProps = {
-  filePath: string;
-  handlePath: string;
-};
-
-export type RumboStaticRoute<T = ResolveImportProps> = T & {
-  staticImport: any;
-  appComponent?: any;
-};
-
-export type ResolveImportServerProps = ResolveImportProps & {
-  method: string;
-};
 
 export function resolveImports<T = ResolveImportProps>(options: {
   route: string;

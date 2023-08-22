@@ -1,17 +1,5 @@
 import { Request as ExpressRequest } from "express";
 
-export type ClientRouteProps = {
-  handler: HandlerProps;
-  handlerName: string;
-  handlerPath: string;
-  handlerProps?: any,
-  layout?: HandlerProps;
-  layoutName?: string;
-  layoutPath?: string;
-};
-
-export type ClientRoutes = { [path: string]: ClientRouteProps };
-
 export function createFetchRequest(req: ExpressRequest) {
   let origin = `${req.protocol}://${req.get("host")}`;
   let url = new URL(req.originalUrl || req.url, origin);

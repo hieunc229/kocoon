@@ -1,16 +1,16 @@
 import chalk from "chalk";
 
+import bundleClientSSR from "./bundler";
+import createClientSSRRequest from "./handler";
+
 import { Express } from "express";
 import { createElement } from "react";
 import { RouteObject } from "react-router-dom";
 import { createStaticHandler } from "react-router-dom/server";
 
-import bundleClientSSR from "./bundler";
-import createClientSSRRequest from "./handler";
-
 import { getAppComponent } from "./generator";
+
 import {
-  RumboStaticRoute,
   excludeRegex,
   getLayoutRoute,
   importPathsToClientRoutes,

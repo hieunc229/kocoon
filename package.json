@@ -1,6 +1,6 @@
 {
   "name": "rumbo",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Build fullstack apps, powered by ExpressJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -2,16 +2,12 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import webpack from "webpack";
+
 import { merge } from "webpack-merge";
-import { ClientRoutes } from "./utils";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import {
-  ResolveImportProps,
-  excludeRegex,
-  getLayoutRoute,
-} from "../utils/route";
-import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
+import { excludeRegex, getLayoutRoute } from "../utils/route";
+import { getWebpackReactConfigs } from "../webpack.config.client";
 
 type Props = {
   entries: ResolveImportProps[];
@@ -92,7 +88,10 @@ export default function bundleClientSSR(props: Props) {
   );
   fs.writeFileSync(entryPath, content);
 
-  const clientConfigPath = path.join(path.resolve("./"), "webpack.config.client");
+  const clientConfigPath = path.join(
+    path.resolve("./"),
+    "webpack.config.client"
+  );
   // // @ts-ignore
   let dfConfigs = {};
   try {

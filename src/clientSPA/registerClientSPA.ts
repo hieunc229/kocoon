@@ -2,7 +2,6 @@ import path from "path";
 import bundleClientSPA from "./bundler";
 
 import { Express } from "express";
-import { RumboBundleClientSPAProps } from "./bundler";
 
 type Props = RumboBundleClientSPAProps & {
   app: Express;

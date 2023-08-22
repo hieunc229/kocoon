@@ -1,27 +1,20 @@
+import chalk from "chalk";
+
 import { Request as ExpressReq, Response } from "express";
 import { StaticHandler } from "@remix-run/router";
 import { renderToPipeableStream } from "react-dom/server";
-
-import {
-  StaticRouterProvider,
-  createStaticHandler,
-  createStaticRouter,
-} from "react-router-dom/server";
-import chalk from "chalk";
-import { ClientRouteProps, createFetchRequest } from "./utils";
+import { createFetchRequest } from "./utils";
 import { isPromise } from "util/types";
 import { createElement } from "react";
 import { formatClassName } from "../utils/text";
 import { RouteObject } from "react-router-dom";
 import { excludeRegex, getLayoutRoute } from "../utils/route";
 
-export type ServerProps = {
-  data?: any;
-  props?: any;
-  globalData?: any;
-  status?: number;
-  redirect?: string;
-};
+import {
+  StaticRouterProvider,
+  createStaticHandler,
+  createStaticRouter,
+} from "react-router-dom/server";
 
 type ClientHandlerProps = {
   staticRoutes: RouteObject[];

@@ -1,11 +1,5 @@
 import { Component, createContext, useContext } from "react";
 
-export type AppContextProps = {
-  serverData: any | null;
-  router: any | null;
-  session: any | null
-};
-
 const defaultContextValues = {
   serverData: null,
   router: null,

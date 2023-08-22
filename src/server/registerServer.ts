@@ -1,14 +1,7 @@
 import chalk from "chalk";
 
 import { Express } from "express";
-import { formatClassName } from "../utils/text";
-import {
-  ResolveImportProps,
-  ResolveImportServerProps,
-  RumboStaticRoute,
-  resolveImports,
-  toStaticRoute,
-} from "../utils/route";
+import { resolveImports, toStaticRoute } from "../utils/route";
 
 type PathProps = {
   handlePath: string;

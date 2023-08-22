@@ -6,21 +6,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 
 import { merge } from "webpack-merge";
 import { formatClassName } from "../utils/text";
-import { RumboStaticRoute } from "../utils/route";
-import { WebpackMode, getWebpackReactConfigs } from "../webpack.config.client";
-
-export type RumboBundleClientSPAProps = {
-  location: string;
-  publicPath?: string;
-  distDir: string;
-  route: string;
-  debug?: boolean;
-  rootDir: string;
-  staticImports: null | {
-    [subRoute: string]: RumboStaticRoute;
-  };
-  webpackConfigs?: webpack.Configuration;
-};
+import { getWebpackReactConfigs } from "../webpack.config.client";
 
 export default async function bundleClientSPA(
   props: RumboBundleClientSPAProps

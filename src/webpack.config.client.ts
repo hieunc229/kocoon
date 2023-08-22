@@ -1,14 +1,15 @@
 import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+
 import { formatClassName } from "./utils/text";
 
-export type WebpackMode = "none" | "development" | "production";
 type Props = {
   mode?: WebpackMode;
   publicPath: string;
   entry: string[];
   route: string;
 };
+
 export function getWebpackReactConfigs(props: Props): webpack.Configuration {
   const { mode, entry, route } = props;
 
@@ -78,6 +79,6 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
   if (mode === "development") {
     configs.devtool = "inline-source-map";
   }
-  
+
   return configs;
 }
