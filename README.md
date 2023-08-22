@@ -11,8 +11,8 @@ Supported:
 ### Example folder structure
 ```
 src
-├── app
-│   ├── server
+├── apps
+│   ├── api
 │   │   ├── _middleware.ts
 │   │   ├── index.ts // or get.ts
 │   │   │── post.ts
@@ -23,12 +23,14 @@ src
 │   │   ├── index.ts
 │   │   │── users
 │   │       ├── index.ts
-├── app.ts
+├── dev.ts
+├── index.ts
+├── rumboConfigs.ts
 ```
 
 ### Register middleware
 ```ts
-// src/app/server/_middleware.ts
+// src/app/api/_middleware.ts
 import { Request, Response, NextFunction } from "express";
 
 export default function(req: Request, res: Response, next: NextFunction) {
