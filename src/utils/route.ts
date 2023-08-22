@@ -139,7 +139,7 @@ export function importPathsToClientRoutes(props: {
     if (!pHandlePath || excludeWithoutLayoutRegex.test(pHandlePath)) {
       continue;
     }
-    
+
     const handler = p.staticImport;
     const isLayout = layoutRegex.test(pHandlePath);
     let data = {};
@@ -172,6 +172,6 @@ export function getLayoutRoute(
 ) {
   return (
     routes[`${path}/_layout`] ||
-    routes[path.replace(/\/[a-z:0-9_\:\*\-\_]+$/, "/_layout")]
+    (path !== "/" && routes[path.replace(/\/[a-z:0-9_\:\*\-\_]+$/, "/_layout")])
   );
 }

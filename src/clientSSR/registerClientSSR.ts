@@ -96,7 +96,7 @@ export default async function registerClientSSR(props: Props) {
       return;
     }
 
-    if (!name || name[0] === `_`) {
+    if (name && name[0] === `_`) {
       return;
     }
 
