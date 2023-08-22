@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, useRouteError } from "react-router-dom";
 
@@ -54,6 +54,6 @@ if (typeof document !== "undefined") {
     const routes = [{{routes}}];
 
     globalData && Object.entries(globalData).forEach(([k,v]) => window[k] = v);
-    hydrateRoot(root, <ClientApp routes={routes} settings={settings} routeProps={routeProps} session={session} data={data} />);
+    hydrateRoot(root, <StrictMode><ClientApp routes={routes} settings={settings} routeProps={routeProps} session={session} data={data} /></StrictMode>);
   }
 }
