@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express from "express";
 
 import configs from "./rumboConfigs";
-import rumbo from "./packages/rumbo/src";
+import rumbo from "rumbo";
 
 const app = express();
 rumbo(app, configs);

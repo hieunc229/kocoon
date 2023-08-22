@@ -1,7 +1,6 @@
 import path from "path";
-import { RumboProps } from "rumbo";
 
-const rumboConfigs: RumboProps = {
+const rumboConfigs = {
   debug: true,
   rootDir: __dirname,
   listen: {
