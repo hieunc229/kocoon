@@ -1,0 +1,12 @@
+__rumbo
+dist
+migrations
+node_modules
+src/routes/_api
+src/packages
+*.log
+*.lock
+*.origin
+/knexfile.ts
+/LICENSE
+.DS_Store
