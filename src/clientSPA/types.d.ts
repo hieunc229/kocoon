@@ -5,6 +5,7 @@ type RumboBundleClientSPAProps = {
   route: string;
   debug?: boolean;
   rootDir: string;
+  app: Express;
   staticImports: null | {
     [subRoute: string]: RumboStaticRoute;
   };

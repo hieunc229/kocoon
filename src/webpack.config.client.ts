@@ -11,7 +11,14 @@ type Props = {
 };
 
 export function getWebpackReactConfigs(props: Props): webpack.Configuration {
-  const { mode, entry, route } = props;
+  let { mode, entry = [], route } = props;
+
+  if (process.env.NODE_ENV === "development") {
+    entry.push(
+      "react-hot-loader/patch",
+      "webpack-hot-middleware/client"
+    );
+  }
 
   let configs: webpack.Configuration = {
     mode,

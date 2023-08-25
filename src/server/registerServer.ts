@@ -63,6 +63,7 @@ export default async function registerServer(options: {
     }
   });
 
+  
   for (let p of paths) {
     const pMethod = p.method;
     const pFilePath = p.filePath;
@@ -77,16 +78,28 @@ export default async function registerServer(options: {
     // require(pFilePath);
 
     if (typeof handlers.default === "function") {
+      let classHandlers = Object.keys(handlers)
+        .filter((k) => typeof handlers[k] === "function" && k !== "default")
+        .sort((a, b) => (a === "default" ? -1 : b === "default" ? 1 : 1))
+        .map((k) => handlers[k]);
+
       app[
         pMethod as "post" | "get" | "patch" | "delete" | "use" | "options"
       ].apply(
         app,
         // @ts-ignore
-        [pHandlePath, Object.keys(handlers).map((k) => handlers[k])]
+        [pHandlePath, [handlers.default, ...classHandlers]]
       );
 
       debug &&
-        console.log(chalk.gray(`- (${pMethod})`, pHandlePath, pFilePath));
+        console.log(
+          chalk.gray(
+            `- (${pMethod})`,
+            pHandlePath,
+            pFilePath,
+            `(${classHandlers.length} handlers)`
+          )
+        );
     } else {
       console.log(
         chalk.redBright(

@@ -44,10 +44,28 @@ export function resolveImports<T = ResolveImportProps>(options: {
 export function toStaticRoute<T = ResolveImportProps>(
   item: T
 ): RumboStaticRoute<T> {
+  // @ts-ignore
+  const staticImport = require(item.filePath);
+  // @ts-ignore
+  let handlePath = item.handlePath;
+
+  // @ts-ignore
+  let method = item.method;
+
+  if (
+    !["post", "get", "patch", "put", "delete", "options", "use"].includes(
+      method
+    )
+  ) {
+    handlePath += "/" + method;
+    method = staticImport.props.type || "get";
+  }
+
   return {
     ...item,
-    // @ts-ignore
-    staticImport: require(item.filePath),
+    staticImport,
+    handlePath,
+    method,
   };
 }
 
@@ -59,14 +77,25 @@ function sortClientPath(a: ResolveImportProps, b: ResolveImportProps) {
   return b.handlePath.length - a.handlePath.length;
 }
 
+ // Define the order of HTTP methods based on priority
+ const httpMethodPriority = ['all', 'get', 'post', 'put', 'delete', 'patch'];
+
+
 function sortServerPath(
   a: ResolveImportServerProps,
   b: ResolveImportServerProps
 ) {
-  if (a.handlePath === b.handlePath && a.method === "use") {
-    return -1;
+  // Compare HTTP methods based on their priority
+  const methodA = httpMethodPriority.indexOf(a.method.toLowerCase());
+  const methodB = httpMethodPriority.indexOf(b.method.toLowerCase());
+
+  // Sort by method priority first
+  if (methodA !== methodB) {
+      return methodA - methodB;
   }
-  return sortClientPath(a, b);
+
+  // If methods are the same or both are 'all', compare paths
+  return a.handlePath.localeCompare(b.handlePath);
 }
 
 function getRegisterClientPath(options: {
@@ -98,7 +127,7 @@ function getRegisterServerPath(options: {
     method = "use";
   }
 
-  const handlePath =
+  let handlePath =
     name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
 
   return {
@@ -157,6 +186,8 @@ export function getLayoutRoute(
 ) {
   return (
     routes[`${path}/_layout`] ||
-    (path !== "/" && routes[path.replace(/\/[a-z:0-9_\:\*\-\_]+$/, "/_layout")])
+    (path == "/"
+      ? routes["/_layout"]
+      : routes[path.replace(/\/[a-z:0-9_\:\*\-\_]+$/, "/_layout")])
   );
 }

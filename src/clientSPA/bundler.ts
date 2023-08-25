@@ -8,6 +8,9 @@ import { merge } from "webpack-merge";
 import { formatClassName } from "../utils/text";
 import { getWebpackReactConfigs } from "../webpack.config.client";
 
+import webpackHotMiddleware from "webpack-hot-middleware";
+import webpackDevelopmentMiddleware from "webpack-dev-middleware";
+
 export default async function bundleClientSPA(
   props: RumboBundleClientSPAProps
 ): Promise<any> {
@@ -24,7 +27,10 @@ export default async function bundleClientSPA(
   const entryPath = path.join(location, "index.tsx");
 
   let dfConfigs = {};
-  const clientConfigPath = path.join(path.resolve("./"), "webpack.config.client");
+  const clientConfigPath = path.join(
+    path.resolve("./"),
+    "webpack.config.client"
+  );
 
   try {
     dfConfigs = require(clientConfigPath).default || {};
@@ -71,6 +77,14 @@ export default async function bundleClientSPA(
   debug && console.log(chalk.green(`[Client SPA]`, route));
 
   const compiler = webpack(configs);
+
+  if (process.env.NODE_ENV === "development") {
+    props.app
+      .use(webpackDevelopmentMiddleware(compiler, { publicPath: props.publicPath }))
+      .use(webpackHotMiddleware(compiler, { path: route }));
+    return Promise.resolve();
+  }
+
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
       if (err) {

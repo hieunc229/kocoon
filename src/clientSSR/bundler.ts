@@ -9,6 +9,10 @@ import { formatClassName } from "../utils/text";
 import { excludeRegex, getLayoutRoute } from "../utils/route";
 import { getWebpackReactConfigs } from "../webpack.config.client";
 
+import webpackHotMiddleware from "webpack-hot-middleware";
+import webpackDevelopmentMiddleware from "webpack-dev-middleware";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+
 type Props = {
   entries: ResolveImportProps[];
   publicPath?: string;
@@ -17,6 +21,7 @@ type Props = {
   distDir: string;
   debug: boolean;
   rootDir: string;
+  app: any;
   webpackConfigs?: webpack.Configuration;
 };
 
@@ -96,13 +101,8 @@ export default function bundleClientSSR(props: Props) {
   let dfConfigs = {};
   try {
     dfConfigs = require(clientConfigPath) || {};
-    // debug &&
-    //   console.log(
-    //     `staticImports ssr.bundler.userConfigFile ${formatClassName(
-    //       route
-    //     )} (${clientConfigPath})`
-    //   );
   } catch (e) {
+    console.log(e);
     // no client config
   }
 
@@ -118,7 +118,7 @@ export default function bundleClientSSR(props: Props) {
     route,
   });
 
-  const configs: webpack.Configuration = merge(
+  let configs: webpack.Configuration = merge(
     clientConfigs,
     {
       mode,
@@ -135,6 +135,33 @@ export default function bundleClientSSR(props: Props) {
     },
     dfConfigs
   );
+
+  if (process.env.NODE_ENV === "development") {
+    configs = merge(configs, {
+      output: {
+        publicPath: "/static",
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          filename: path.join(distDir, route, "index.html"),
+          template: path.join(distDir, "index.html"),
+        }),
+        new webpack.HotModuleReplacementPlugin(),
+      ],
+    });
+
+    const compiler = webpack(configs);
+    props.app
+      .use(
+        webpackDevelopmentMiddleware(compiler, {
+          publicPath: "/static", // props.publicPath,
+          // writeToDisk: true,
+        })
+      )
+      .use(webpackHotMiddleware(compiler, { log: false }));
+    configs.name = route;
+    return Promise.resolve();
+  }
 
   const compiler = webpack(configs);
 

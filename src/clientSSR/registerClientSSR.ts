@@ -124,6 +124,7 @@ export default async function registerClientSSR(props: Props) {
       distDir,
       debug,
       rootDir,
+      app
     });
   }
 }
