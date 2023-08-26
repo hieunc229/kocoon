@@ -147,15 +147,13 @@ export default function bundleClientSSR(props: Props) {
           template: path.join(distDir, "index.html"),
         }),
         new webpack.HotModuleReplacementPlugin(),
-      ],
+      ]
     });
-
     const compiler = webpack(configs);
     props.app
       .use(
         webpackDevelopmentMiddleware(compiler, {
-          publicPath: "/static", // props.publicPath,
-          // writeToDisk: true,
+          publicPath: "/static",
         })
       )
       .use(webpackHotMiddleware(compiler, { log: false }));

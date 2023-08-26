@@ -58,7 +58,7 @@ export function toStaticRoute<T = ResolveImportProps>(
     )
   ) {
     handlePath += "/" + method;
-    method = staticImport.props.type || "get";
+    method = staticImport.props?.type || "get";
   }
 
   return {
