@@ -77,7 +77,7 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
       }),
     ],
     optimization: {
-      minimize: true,
+      minimize: mode === "production",
       usedExports: true,
       // getServerProps: false
     },
