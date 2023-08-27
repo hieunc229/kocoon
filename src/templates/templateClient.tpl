@@ -1,6 +1,7 @@
 import { createElement, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { AppContainer } from 'react-hot-loader';
+import { render } from "@hot-loader/react-dom";
 
 import ClientEntry from "rumbo/components/ClientEntry";
 import ErrorBoundary from "rumbo/components/ErrorBoundary"
@@ -18,10 +19,25 @@ if (typeof document !== "undefined") {
 
     globalData &&
       Object.entries(globalData).forEach(([k, v]) => (window[k] = v));
-      
-    hydrateRoot(
-      root,
-      <StrictMode>
+    
+    if (NODE_ENV === "production") {
+      hydrateRoot(
+        root,
+        <StrictMode>
+          <AppContainer>
+            <ClientEntry
+              context={__context}
+              routes={routes}
+              settings={settings}
+              routeProps={routeProps}
+              session={session}
+              data={data}
+            />
+          </AppContainer>
+        </StrictMode>
+      );
+    } else {
+      render(<StrictMode>
         <AppContainer>
           <ClientEntry
             context={__context}
@@ -32,8 +48,8 @@ if (typeof document !== "undefined") {
             data={data}
           />
         </AppContainer>
-      </StrictMode>
-    );
+      </StrictMode>, root)
+    }
 
     if (module.hot) {
       module.hot.accept()
