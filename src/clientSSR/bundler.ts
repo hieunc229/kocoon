@@ -81,7 +81,8 @@ export default function bundleClientSSR(props: Props) {
           return `{path:"${path}",Component:${r.handlerName},props:${routeProps},errorBoundary:<ErrorBoundary/>}`;
         })
         .join(",")
-    );
+    )
+    .replace(`NODE_ENV`, `"${process.env.NODE_ENV}"`);
 
   if (!fs.existsSync(rumboTempDir)) {
     fs.mkdirSync(rumboTempDir);
@@ -147,7 +148,7 @@ export default function bundleClientSSR(props: Props) {
           template: path.join(distDir, "index.html"),
         }),
         new webpack.HotModuleReplacementPlugin(),
-      ]
+      ],
     });
     const compiler = webpack(configs);
     props.app
