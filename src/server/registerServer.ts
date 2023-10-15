@@ -14,35 +14,21 @@ export default async function registerServer(options: {
   debug?: boolean;
   route: string;
   location: string;
+  excludePaths?: string[];
   staticImports: null | {
     [subRoute: string]: RumboStaticRoute<ResolveImportServerProps>;
   };
 }) {
-  const { app, location, route, debug = false, staticImports } = options;
+  const {
+    app,
+    location,
+    route,
+    debug = false,
+    staticImports,
+    excludePaths = [],
+  } = options;
 
   debug && console.log(chalk.green(`[Server]`, route));
-
-  // let paths: PathProps[] = [];
-  // async function registerPath(ppath: string, _path: string) {
-  //   for (let p of fs.readdirSync(_path)) {
-  //     const filePath = path.join(_path, p);
-  //     const currentRoutePath = path.join(route, ppath, p);
-
-  //     if (fs.statSync(filePath).isDirectory()) {
-  //       await registerPath(path.join(ppath, p), filePath);
-  //       continue;
-  //     }
-
-  //     paths.push(
-  //       getRegisterPath({
-  //         filePath,
-  //         routePath: currentRoutePath,
-  //       })
-  //     );
-  //   }
-  // }
-
-  // await registerPath("", location);
 
   const paths = staticImports
     ? Object.entries(staticImports).map(([, item]) => item)
@@ -50,6 +36,7 @@ export default async function registerServer(options: {
         route,
         location,
         type: "server",
+        excludePaths,
       }).map(toStaticRoute);
 
   paths.forEach((p, i, list) => {
@@ -63,19 +50,11 @@ export default async function registerServer(options: {
     }
   });
 
-  
   for (let p of paths) {
-    const pMethod = p.method;
+    const handlers = p.staticImport;
+    const pMethod = handlers.props?.type || p.method;
     const pFilePath = p.filePath;
     const pHandlePath = p.handlePath;
-
-    // debug &&
-    //   console.log(
-    //     `staticImports server ${formatClassName(pHandlePath)} (${pFilePath})`
-    //   );
-    const handlers = p.staticImport;
-    // (staticImports && staticImports[formatClassName(pHandlePath)]?.import) ||
-    // require(pFilePath);
 
     if (typeof handlers.default === "function") {
       let classHandlers = Object.keys(handlers)
@@ -94,23 +73,23 @@ export default async function registerServer(options: {
       debug &&
         console.log(
           chalk.gray(
-            `- (${pMethod})`,
+            `- [${pMethod.substring(0,3).toUpperCase()}]`,
             pHandlePath,
-            pFilePath,
-            `(${classHandlers.length} handlers)`
+            // pFilePath,
+            classHandlers.length ? `(${classHandlers.length} extra handlers)` : ""
           )
         );
     } else {
       console.log(
         chalk.redBright(
-          `Invalid handler:\n- (${pMethod}) ${pHandlePath}\n- at ${pFilePath}`
+          `✖ (${pMethod}) ${pHandlePath} (no default handler) ${pFilePath}`
         )
       );
-      process.exit();
+      // process.exit();
     }
   }
 
-  console.log(chalk.gray(`- Server routes initiated`));
+  console.log(chalk.gray(`✓ Server routes initiated`));
 }
 
 function sortPath(a: PathProps, b: PathProps) {

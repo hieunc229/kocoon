@@ -22,7 +22,6 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
 
   let configs: webpack.Configuration = {
     mode,
-    // devtool: mode === "development" ? "eval-cheap-source-map" : undefined,
     entry,
     module: {
       rules: [

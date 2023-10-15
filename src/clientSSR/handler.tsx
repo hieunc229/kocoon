@@ -63,7 +63,7 @@ async function handleRequest(
   let routeProps = null;
 
   if (handler.getServerProps) {
-    const fn = handler.getServerProps(req);
+    const fn = handler.getServerProps(req as any);
     const {
       redirect,
       status,
