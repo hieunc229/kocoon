@@ -4,12 +4,14 @@ import { AppContainer } from 'react-hot-loader';
 import { render } from "@hot-loader/react-dom";
 
 import ClientEntry from "rumbo/components/ClientEntry";
-import ErrorBoundary from "rumbo/components/ErrorBoundary"
+import ErrorBoundary from "rumbo/components/ErrorBoundary";
+import { register } from "rumbo/serviceWorkerRegistration";
 
 
 {{imports}}
 
-const __context = null;
+// @ts-ignore
+const __wrapper = typeof __container !== "undefined" ? __container : null;
 
 if (typeof document !== "undefined") {
   const root = document.querySelector("#root");
@@ -20,27 +22,12 @@ if (typeof document !== "undefined") {
     globalData &&
       Object.entries(globalData).forEach(([k, v]) => (window[k] = v));
     
-    if (NODE_ENV === "production") {
-      hydrateRoot(
-        root,
-        <StrictMode>
-          <AppContainer>
-            <ClientEntry
-              context={__context}
-              routes={routes}
-              settings={settings}
-              routeProps={routeProps}
-              session={session}
-              data={data}
-            />
-          </AppContainer>
-        </StrictMode>
-      );
-    } else {
+    // @ts-ignore
+    if (NODE_ENV === "development" || renderStrategy === "render") {
       render(<StrictMode>
         <AppContainer>
           <ClientEntry
-            context={__context}
+            wrapper={__wrapper}
             routes={routes}
             settings={settings}
             routeProps={routeProps}
@@ -48,11 +35,29 @@ if (typeof document !== "undefined") {
             data={data}
           />
         </AppContainer>
-      </StrictMode>, root)
+      </StrictMode>, root);
+    } else {
+      hydrateRoot(
+        root,
+        <StrictMode>
+          <ClientEntry
+            wrapper={__wrapper}
+            routes={routes}
+            settings={settings}
+            routeProps={routeProps}
+            session={session}
+            data={data}
+          />
+        </StrictMode>
+      );
     }
 
-    if (module.hot) {
-      module.hot.accept()
+    if (module['hot']) {
+      module['hot'].accept()
     }
   }
+}
+
+if (pwaEnabled) {
+  register()
 }

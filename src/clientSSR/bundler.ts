@@ -21,8 +21,9 @@ type Props = {
   distDir: string;
   debug: boolean;
   rootDir: string;
-  app: any;
+  app?: any;
   webpackConfigs?: webpack.Configuration;
+  appProps: RumboProps
 };
 
 export default function bundleClientSSR(props: Props) {
@@ -32,8 +33,11 @@ export default function bundleClientSSR(props: Props) {
     route,
     distDir,
     rootDir,
-    webpackConfigs,
+    webpackConfigs = {},
+    appProps
   } = props;
+
+  const { renderStrategy = "auto", pwaEnabled = false } = appProps;
 
   const entries = props.entries.map((e) => ({
     ...e,
@@ -82,7 +86,10 @@ export default function bundleClientSSR(props: Props) {
         })
         .join(",")
     )
-    .replace(`NODE_ENV`, `"${process.env.NODE_ENV}"`);
+    .replace("<html", "<!DOCTYPE html>\n<html")
+    .replace(`pwaEnabled`, `"${pwaEnabled}"`)
+    .replace(`NODE_ENV`, `"${process.env.NODE_ENV}"`)
+    .replace(`renderStrategy`, `"${renderStrategy}"`);
 
   if (!fs.existsSync(rumboTempDir)) {
     fs.mkdirSync(rumboTempDir);
@@ -134,7 +141,8 @@ export default function bundleClientSSR(props: Props) {
         },
       },
     },
-    dfConfigs
+    dfConfigs,
+    webpackConfigs
   );
 
   if (process.env.NODE_ENV === "development") {
@@ -151,8 +159,7 @@ export default function bundleClientSSR(props: Props) {
       ],
     });
     const compiler = webpack(configs);
-    props.app
-      .use(
+    props.app?.use(
         webpackDevelopmentMiddleware(compiler, {
           publicPath: "/static",
         })
