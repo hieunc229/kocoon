@@ -9,6 +9,7 @@ type RumboAppProps = {
    * If your app is client-ssr, and already have router, set to `false`
    */
   clientUseRouter?: boolean;
+  excludePaths?: string[]
 };
 
 type RumboAppConfigs = RumboAppProps & {
@@ -19,10 +20,13 @@ type RumboRouteProps = { [route: string]: RumboAppProps };
 
 type RumboProps = {
   debug?: boolean;
+  pwaEnabled?: boolean;
   publicDir?: string;
   distDir?: string;
   rootDir?: string;
   routes: RumboRouteProps;
+  staticExtensions?: string;
+  renderStrategy?: "auto" | "render" | "hydrate",
   staticRoutes: null | {
     [route: string]: { [subRoute: string]: RumboStaticRoute };
   };

@@ -5,6 +5,7 @@ import { Express, Request, Response } from "express";
 
 type Props = RumboBundleClientSPAProps & {
   app: Express;
+  excludePaths: string[]
 };
 
 export default async function registerClientSPA(props: Props): Promise<any> {

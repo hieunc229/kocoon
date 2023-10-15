@@ -6,8 +6,9 @@ export function resolveImports<T = ResolveImportProps>(options: {
   route: string;
   location: string;
   type: "server" | "client";
+  excludePaths: string[];
 }): T[] {
-  const { route, location, type } = options;
+  const { route, location, type, excludePaths = [] } = options;
 
   let paths: T[] = [];
 
@@ -21,7 +22,10 @@ export function resolveImports<T = ResolveImportProps>(options: {
       const filePath = path.join(route, pathRoute.replace(route, ""), p);
 
       if (fs.statSync(fileAbsPath).isDirectory()) {
-        registerPath(filePath, fileAbsPath);
+        
+        if (!excludePaths.includes(p)) {
+          registerPath(filePath, fileAbsPath);
+        }
         continue;
       }
 
@@ -77,9 +81,8 @@ function sortClientPath(a: ResolveImportProps, b: ResolveImportProps) {
   return b.handlePath.length - a.handlePath.length;
 }
 
- // Define the order of HTTP methods based on priority
- const httpMethodPriority = ['all', 'get', 'post', 'put', 'delete', 'patch'];
-
+// Define the order of HTTP methods based on priority
+const httpMethodPriority = ["all", "get", "post", "put", "delete", "patch"];
 
 function sortServerPath(
   a: ResolveImportServerProps,
@@ -91,7 +94,7 @@ function sortServerPath(
 
   // Sort by method priority first
   if (methodA !== methodB) {
-      return methodA - methodB;
+    return methodA - methodB;
   }
 
   // If methods are the same or both are 'all', compare paths
@@ -119,12 +122,21 @@ function getRegisterServerPath(options: {
   const { filePath, routePath } = options;
   let parts = (routePath.split(".").shift() || "").split("/");
   let method = parts.pop();
-  const name = parts.join("/");
+  let name = parts.join("/");
 
   if (!method || method === "index") {
     method = "get";
   } else if (method === "_middleware") {
     method = "use";
+  }
+
+  if (
+    ["use", "patch", "options", "get", "post", "delete"].indexOf(
+      method.toLowerCase()
+    ) === -1
+  ) {
+    name += `/${method}`;
+    method = "get";
   }
 
   let handlePath =
@@ -138,8 +150,8 @@ function getRegisterServerPath(options: {
 }
 
 export const layoutRegex = /_layout$/i;
-export const excludeRegex = /_(layout|middleware|context)$/i;
-export const excludeWithoutLayoutRegex = /_(context|middleware)$/i;
+export const excludeRegex = /_(layout|middleware|context|container)$/i;
+export const excludeWithoutLayoutRegex = /_(context|middleware|container)$/i;
 export function importPathsToClientRoutes(props: {
   paths: RumboStaticRoute[];
 }) {

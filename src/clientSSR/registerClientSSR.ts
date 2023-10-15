@@ -24,8 +24,10 @@ type Props = {
   distDir: string;
   route: string;
   app: Express;
+  appProps: RumboProps,
   debug?: boolean;
   clientUseRouter?: boolean;
+  excludePaths?: string[]
   staticImports: null | {
     [subRoute: string]: RumboStaticRoute;
   };
@@ -42,6 +44,8 @@ export default async function registerClientSSR(props: Props) {
     location,
     clientUseRouter = false,
     staticImports,
+    excludePaths = [],
+    appProps
   } = props;
 
   debug && console.log(chalk.green(`[Client SSR]`, route));
@@ -52,6 +56,7 @@ export default async function registerClientSSR(props: Props) {
         route,
         location,
         type: "client",
+        excludePaths
       }).map((item) => {
         return {
           ...item,
@@ -124,7 +129,8 @@ export default async function registerClientSSR(props: Props) {
       distDir,
       debug,
       rootDir,
-      app
+      app,
+      appProps
     });
   }
 }

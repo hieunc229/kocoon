@@ -22,6 +22,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     listen,
     routes,
     staticRoutes,
+    staticExtensions
   } = options;
 
   const publicPath = publicDir || path.join(rootDir, "../public");
@@ -40,7 +41,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
   if (distDir !== publicPath) {
     fse.copySync(publicPath, distDir);
   }
-  
+
   for (const client of apps) {
     const staticImports: any = staticRoutes ? staticRoutes[client.route] : null;
     switch (client.type) {
@@ -50,6 +51,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           debug,
           staticImports,
           ...client,
+          excludePaths: client.excludePaths || [],
         });
         break;
       case "client-spa":
@@ -61,6 +63,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           staticImports,
           rootDir,
           ...client,
+          excludePaths: client.excludePaths || [],
         });
         break;
       case "client-ssr":
@@ -72,6 +75,8 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           rootDir,
           staticImports,
           ...client,
+          excludePaths: client.excludePaths || [],
+          appProps: options
         });
         break;
       case "static":
@@ -80,14 +85,16 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     }
   }
 
-  app.get("/*", staticMiddleware({ location: distDir }));
+  app.get("/*", staticMiddleware({ location: distDir, extensions: staticExtensions }));
 
-  let { host, port } = Object.assign(
-    { host: "localhost", port: 3000 },
-    typeof listen === "object" ? listen : {}
-  );
+  if (listen) {
+    let { host, port } = Object.assign(
+      { host: "0.0.0.0", port: 3000 },
+      typeof listen === "object" ? listen : {}
+    );
 
-  app.listen(port, host, () => {
-    console.log(chalk.green(`Server available on ${host}:${port}`));
-  });
+    app.listen(port, host, () => {
+      console.log(chalk.green(`Server available on ${host}:${port}`));
+    });
+  }
 }
