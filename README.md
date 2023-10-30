@@ -53,8 +53,10 @@ const rumboConfigs: RumboProps = {
     "/api": {
       type: "server",
       location: path.join(__dirname, "routes/api"),
+      excludePaths: ["includes"]
     },
   },
+  // must specify for generating files in runtime
   staticRoutes: null
 };
 
@@ -94,7 +96,6 @@ export default function(req: Request, res: Response) {
 import { Request, Response } from "express";
 
 export default function(req: Request, res: Response) {
-
   res.json({
     message: "ok"
   })
@@ -105,23 +106,11 @@ export default function(req: Request, res: Response) {
 
 ```ts
 // app.ts
-import path from "path"
 import express from "express";
-import register from "express-route-register";
+import rumbo from "rumbo";
+
+import configs from "./rumboConfigs";
 
 const app = express();
-
-register({
-  app,
-  // debug: true, // log registed handlers
-  react: "/"
-});
-
-
-const host = process.env.HOST || "localhost";
-const port = parseInt(process.env.PORT || "8080");
-
-app.listen(port, host, () => {
-  console.log(`Server started ${host}:${port}`);
-})
+rumbo(app, configs);
 ```

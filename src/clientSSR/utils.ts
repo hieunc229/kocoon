@@ -7,16 +7,16 @@ export function createFetchRequest(req: ExpressRequest) {
   let controller = new AbortController();
   req.on("close", () => controller.abort());
 
-  let headers = new Headers();
+  let headers: any = {};
 
   for (let [key, values] of Object.entries(req.headers)) {
     if (values) {
       if (Array.isArray(values)) {
         for (let value of values) {
-          headers.append(key, value);
+          headers[key] = value;
         }
       } else {
-        headers.set(key, values);
+        headers[key] = values;
       }
     }
   }
