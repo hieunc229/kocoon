@@ -1,25 +1,16 @@
-// import { resolveStaticImports } from "./importResolver";
-// import CopyPlugin from "copy-webpack-plugin";
-// import fs from "fs";
-// import path from "path";
-// import chalk from "chalk";
-// import webpack from "webpack";
 
-// import defaultConfigs from "./webpack.config";
-// import { merge } from "webpack-merge";
+require("ignore-styles").default(['.css', '.scss']);
 
-const { resolveStaticImports } = require("./importResolver");
-// const CopyPlugin = require("copy-webpack-plugin");
+import path from "path";
+import { resolveStaticImports } from "./importResolver";
+
 const fs = require("fs");
-const path = require("path");
 const chalk = require("chalk");
 const webpack = require("webpack");
 
 const defaultConfigs = require("./webpack.config");
 const { merge } = require("webpack-merge");
 
-
-// const projectDir = path.join(__dirname, "../build/src");
 const buildDir = path.join(__dirname, "../build/src");
 
 function updateConfigFile() {
@@ -61,24 +52,18 @@ function updateConfigFile() {
       "staticRoutes: null",
       `staticRoutes: {${Object.entries(staticRoutes).map(
         ([r, routes]) =>
-          `"${r}": {${Object.entries(routes)
+          `"${r}": {${Object.entries(routes as any)
             .map(
-              ([sr, info]) =>
+              ([sr, info]: [string, any]) =>
                 `"${sr}": ${JSON.stringify(info).replace(
-                  `"staticImport":"${info.staticImport || info.className || sr}"`,
+                  `"staticImport":"${
+                    info.staticImport || info.className || sr
+                  }"`,
                   `"staticImport":${info.staticImport || info.className || sr}`
                 )}`
             )
             .join(",")}}`
       )}}`
-      // `staticRoutes: {
-      //   ${Object.entries(routes)
-      //     .map(
-      //       ([_]) =>
-      //         `"${formatClassName(_)}":{ handler: ${formatClassName(_)} }`
-      //     )
-      //     .join(",\n")}
-      // }`
     );
 
   // 3. update content file
@@ -96,14 +81,14 @@ function run() {
     userConfigs = require(userConfigPath);
   } catch (e) {}
 
-
   let wpconfigs = merge(userConfigs, defaultConfigs, {
     // stats: "verbose",
-    resolve: {
-      alias: {
-        rumbo: "../src/packages/rumbo/dist",
-      },
-    },
+    mode: "production",
+    // resolve: {
+    //   alias: {
+    //     rumbo: "../src/packages/rumbo/dist",
+    //   },
+    // },
     // plugins: [
     //   // @ts-ignore
     //   new CopyPlugin({

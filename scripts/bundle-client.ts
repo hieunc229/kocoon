@@ -1,20 +1,21 @@
-require("ignore-styles");
+require("ignore-styles").default(['.css', '.scss']);
 
-const path = require("path");
-const fse = require("fs-extra");
-const { resolveImports } = require("../src/packages/rumbo/dist/utils/route");
-const bundleClientSPA =
-  require("../src/packages/rumbo/dist/clientSPA/registerClientSPA").default;
+import path from "path";
+import fse from "fs-extra";
+import bundleClientSPA from "rumbo/clientSPA/registerClientSPA"
+
+import { resolveImports } from "rumbo/utils/route";
 
 const buildDir = path.join(__dirname, "../build/src");
 
 function __bundleSPAClient({ route, item, publicPath, distDir }) {
-  const { location } = item;
-
+  
+  const { location, excludePaths = [] } = item;
   const staticImports = resolveImports({
     route,
     location,
     type: "client",
+    excludePaths
   }).map((item) => ({
     ...item,
     staticImport: require(item.filePath),

@@ -13,7 +13,6 @@ This template contains basic setup and scripts, including
 
 ## Available Scripts
 
-
 This template comes with scripts to bundle client and server codes, located at `/scripts` directory.
 
 ### Development
@@ -29,7 +28,7 @@ Run `npm run build` or `yarn build` to bundle codes
 
 This script will bundle all client, server codes, including styles and native npm modules. Since the bundle includes required modules, you can run the server (which include apis and clients) directly without install any modules
 
-Once completed, you can run the server with node by using `node bundle/server.js`, or use deamon process manager like `PM2` to run your app on the background
+Once completed, you can run the server with node by using `node bundle/server/index.js`, or use deamon process manager like `PM2` to run your app on the background
 
 ### Clean
 

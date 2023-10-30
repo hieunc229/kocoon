@@ -1,13 +1,11 @@
 const path = require("path");
-// const webpack = require("webpack");
 
 module.exports = {
   target: "node",
   mode: "production",
-  // externals: [nodeExternals()], // removes node_modules from your final bundle
   entry: path.join(__dirname, "../build/src/index.js"),
   output: {
-    path: path.join(__dirname, "../bundle/server"), // this can be any path and directory you want
+    path: path.join(__dirname, "../bundle/server"),
     filename: "index.js",
     clean: true,
   },
@@ -36,10 +34,11 @@ module.exports = {
           },
         },
       },
-      // {
-      //   test: /\.(scss|sass|css)$/i,
-      //   use: ["style-loader", "css-loader", "sass-loader", "postcss-loader"],
-      // },
+      {
+        test: /\.(scss|sass)$/i,
+        exclude: /./,
+        use: ["style-loader", "css-loader", "sass-loader", "postcss-loader"],
+      },
     ],
   },
   resolve: {
@@ -47,5 +46,5 @@ module.exports = {
   },
   optimization: {
     minimize: false, //"compress",
-  },
+  }
 };
