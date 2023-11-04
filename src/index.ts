@@ -42,6 +42,8 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     fse.copySync(publicPath, distDir);
   }
 
+  app.get("/*", staticMiddleware({ location: distDir, extensions: staticExtensions }));
+
   for (const client of apps) {
     const staticImports: any = staticRoutes ? staticRoutes[client.route] : null;
     switch (client.type) {
@@ -84,8 +86,6 @@ export default async function Rumbo(app: Express, options: RumboProps) {
         break;
     }
   }
-
-  app.get("/*", staticMiddleware({ location: distDir, extensions: staticExtensions }));
 
   if (listen) {
     let { host, port } = Object.assign(

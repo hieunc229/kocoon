@@ -2,15 +2,22 @@ import path from "path";
 import { NextFunction, Request, Response } from "express";
 
 const exts =
-  "ai,xlx,doc,docx,avi,css,csv,doc,docx,eot,gif,ico,icon,jpeg,jpg,js,json,mov,mp3,mp4,otf,pdf,png,svg,ttf,txt,wav,woff,wasm,woff2";
-  
+  "ai,xlx,doc,docx,avi,csv,doc,docx,eot,gif,ico,icon,jpeg,jpg,json,mov,mp3,mp4,otf,pdf,png,svg,ttf,txt,wav,woff,wasm,woff2";
+
+// Leave this files for hmr to generate
+const prodExts = "css,js";
+
 export function staticMiddleware(props: {
   location: string;
   extensions?: string;
 }) {
   const { location, extensions = "" } = props;
 
-  const allowedExts = `${exts},${extensions}`.split(",").filter(Boolean);
+  const allowedExts = `${exts},${
+    process.env.NODE_ENV === "production" ? `${prodExts},` : ""
+  }${extensions}`
+    .split(",")
+    .filter(Boolean);
 
   return function (req: Request, res: Response, next: NextFunction) {
     const parts = req.path.split(".");

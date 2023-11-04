@@ -92,6 +92,22 @@ export default async function registerClientSSR(props: Props) {
       : getAppComponent({ publicPath, route, debug, rootDir })
   ).default;
 
+
+  if (!staticImports) {
+    debug && console.log(chalk.gray("Bundle client..."));
+    await bundleClientSSR({
+      entries: paths,
+      publicPath,
+      routes,
+      route,
+      distDir,
+      debug,
+      rootDir,
+      app,
+      appProps
+    });
+  }
+
   // register paths
   Object.entries(routes).forEach(([r, props]) => {
     let parts = r.split("/");
@@ -118,19 +134,4 @@ export default async function registerClientSSR(props: Props) {
     );
     debug && console.log(chalk.gray(`-`, r));
   });
-
-  if (!staticImports) {
-    debug && console.log(chalk.gray("Bundle client..."));
-    await bundleClientSSR({
-      entries: paths,
-      publicPath,
-      routes,
-      route,
-      distDir,
-      debug,
-      rootDir,
-      app,
-      appProps
-    });
-  }
 }
