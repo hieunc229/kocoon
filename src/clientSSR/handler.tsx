@@ -10,6 +10,11 @@ import { formatClassName } from "../utils/text";
 import { RouteObject } from "react-router-dom";
 import { excludeRegex, getLayoutRoute } from "../utils/route";
 
+import React from "react";
+
+// Fix useLayoutEffect warning message on server
+React.useLayoutEffect = React.useEffect
+
 import {
   StaticRouterProvider,
   createStaticHandler,
