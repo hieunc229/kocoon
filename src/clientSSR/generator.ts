@@ -39,9 +39,8 @@ export default function generateApp(props: {
       .replace(`rel="stylesheet"></head>`, `rel="stylesheet"/></head>`)
       .replace(
         "</head>",
-        `<link href="/static/${formatClassName(
-          route
-        )}.css" rel="stylesheet" /></head>`
+        // `<link href="/static/_.css" rel="stylesheet" /></head>`
+        `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" /></head>`
       )
     // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
   );

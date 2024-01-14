@@ -27,6 +27,7 @@ type RumboProps = {
   routes: RumboRouteProps;
   staticExtensions?: string;
   renderStrategy?: "auto" | "render" | "hydrate",
+  statics?: { path: string, location: string }[]
   staticRoutes: null | {
     [route: string]: { [subRoute: string]: RumboStaticRoute };
   };

@@ -3,11 +3,11 @@ import chalk from "chalk";
 import { Express } from "express";
 import { resolveImports, toStaticRoute } from "../utils/route";
 
-type PathProps = {
-  handlePath: string;
-  method: string;
-  filePath: string;
-};
+// type PathProps = {
+//   handlePath: string;
+//   method: string;
+//   filePath: string;
+// };
 
 export default async function registerServer(options: {
   app: Express;
@@ -92,34 +92,34 @@ export default async function registerServer(options: {
   console.log(chalk.gray(`✓ Server routes initiated`));
 }
 
-function sortPath(a: PathProps, b: PathProps) {
-  if (a.handlePath === b.handlePath && a.method === "use") {
-    return -1;
-  }
-  return a.handlePath.localeCompare(b.handlePath);
-}
+// function sortPath(a: PathProps, b: PathProps) {
+//   if (a.handlePath === b.handlePath && a.method === "use") {
+//     return -1;
+//   }
+//   return a.handlePath.localeCompare(b.handlePath);
+// }
 
-function transformPath(options: ResolveImportProps) {
-  const { filePath, handlePath: routePath } = options;
-  let parts = (routePath.split(".").shift() || "").split("/");
-  let method = parts.pop();
-  const name = parts.join("/");
+// function transformPath(options: ResolveImportProps) {
+//   const { filePath, handlePath: routePath } = options;
+//   let parts = (routePath.split(".").shift() || "").split("/");
+//   let method = parts.pop();
+//   const name = parts.join("/");
 
-  if (!method || method === "index") {
-    method = "get";
-  } else if (method === "_middleware") {
-    method = "use";
-  }
+//   if (!method || method === "index") {
+//     method = "get";
+//   } else if (method === "_middleware") {
+//     method = "use";
+//   }
 
-  const handlePath =
-    name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
+//   const handlePath =
+//     name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1") || "/";
 
-  return {
-    handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
-    method,
-    filePath,
-  };
-}
+//   return {
+//     handlePath: handlePath === "/" ? handlePath : handlePath.replace(/\/$/, ""),
+//     method,
+//     filePath,
+//   };
+// }
 
 // function getRegisterPath(options: { filePath: string; routePath: string }) {
 //   const { filePath, routePath } = options;

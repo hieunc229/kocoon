@@ -1,7 +1,7 @@
 import { hot } from "react-hot-loader/root";
 
-import { createElement } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createElement, useLayoutEffect, useState } from "react";
+import { createBrowserRouter, RouterProvider, useLocation } from "react-router-dom";
 import { AppContextProvider } from "./context";
 
 type Props = {
@@ -21,7 +21,6 @@ type Props = {
 function ClientApp(props: Props) {
   const routes = props.routes;
   const AppContainer = props.wrapper;
-
   if (props.settings.clientUseRouter) {
     const currentRoute = routes.find(
       (item) => item.path === props.settings.path
@@ -38,11 +37,13 @@ function ClientApp(props: Props) {
   }
 
   const router = createBrowserRouter(routes);
+
   const Children = (
     <AppContextProvider
       router={router}
       session={props.session}
       serverData={props.data}
+      routes={routes}
     >
       <RouterProvider router={router} />
     </AppContextProvider>

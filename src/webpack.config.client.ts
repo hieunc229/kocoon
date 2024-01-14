@@ -2,33 +2,34 @@ import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 import { formatClassName } from "./utils/text";
+import merge from "webpack-merge";
+import path from "path";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 
 type Props = {
   mode?: WebpackMode;
   publicPath: string;
   entry: string[];
   route: string;
+  distDir: string;
 };
 
 export function getWebpackReactConfigs(props: Props): webpack.Configuration {
-  let { mode, entry = [], route } = props;
-
-  if (process.env.NODE_ENV === "development") {
+  let { mode, entry = [], route, distDir, publicPath } = props;
+  const isDevelopment = process.env.NODE_ENV === "development";
+  if (isDevelopment) {
     entry.push(
       "react-hot-loader/patch",
-      "webpack-hot-middleware/client"
+      `webpack-hot-middleware/client?path=${path.join(route, "__webpack_hmr")}`
     );
   }
 
   let configs: webpack.Configuration = {
     mode,
+    name: route,
     entry,
     module: {
       rules: [
-        // {
-        //   test: /\.(png|svg|jpg|gif|ico)$/i,
-        //   type: 'asset',
-        // },
         {
           test: /\.(tsx|ts|js|jsx)?$/,
           exclude: /node_modules/,
@@ -45,27 +46,46 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
           },
         },
         {
-          test: /\.(scss|sass|css)$/i,
-          use: [
-            "style-loader",
+          oneOf: [
             {
-              loader: MiniCssExtractPlugin.loader,
-              options: {
-                esModule: false,
-              },
+              test: /\.module\.scss$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                {
+                  loader: "css-loader",
+                  options: {
+                    modules: true,
+                    url: false,
+                  },
+                },
+                "sass-loader",
+              ],
             },
             {
-              loader: "css-loader",
-              options: { url: false },
+              test: /\.(scss|sass|css)$/i,
+              use: [
+                "style-loader",
+                {
+                  loader: MiniCssExtractPlugin.loader,
+                  options: {
+                    esModule: false,
+                  },
+                },
+                {
+                  loader: "css-loader",
+                  options: { url: false },
+                },
+                "sass-loader",
+                "postcss-loader",
+              ],
             },
-            "sass-loader",
-            "postcss-loader",
           ],
         },
       ],
     },
     resolve: {
-      extensions: [".ts", ".js", ".tsx"],
+      extensions: [".ts", ".js", ".tsx", ".json"],
+      modules: ["src", "node_modules"],
     },
     plugins: [
       new webpack.ProvidePlugin({
@@ -74,16 +94,36 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
       new MiniCssExtractPlugin({
         filename: `${formatClassName(route)}.css`,
       }),
+
+      new HtmlWebpackPlugin({
+        filename: path.join(distDir, route, "index.html"),
+        template: path.join(publicPath, "index.html"),
+      }),
     ],
     optimization: {
-      minimize: mode === "production",
-      usedExports: true,
-      // getServerProps: false
+      // usedExports: true,
+      // runtimeChunk: "single",
     },
   };
 
-  if (mode === "development") {
-    configs.devtool = "inline-source-map";
+  
+  if (mode === "production") {
+    configs = merge(configs, {
+      optimization: {
+        minimize: true,
+      },
+    });
+  } else {
+    configs = merge(configs, {
+      // devtool: "inline-source-map",
+      devtool: "cheap-module-source-map",
+      plugins: [new webpack.HotModuleReplacementPlugin()],
+      resolve: {
+        alias: {
+          rumbo: __dirname,
+        },
+      },
+    });
   }
 
   return configs;

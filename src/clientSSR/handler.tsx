@@ -12,14 +12,15 @@ import { excludeRegex, getLayoutRoute } from "../utils/route";
 
 import React from "react";
 
-// Fix useLayoutEffect warning message on server
-React.useLayoutEffect = React.useEffect
-
 import {
   StaticRouterProvider,
   createStaticHandler,
   createStaticRouter,
 } from "react-router-dom/server";
+import { AppContextProvider } from "../components/context";
+
+// Fix useLayoutEffect warning message on server
+React.useLayoutEffect = React.useEffect;
 
 type ClientHandlerProps = {
   staticRoutes: RouteObject[];
@@ -72,6 +73,7 @@ async function handleRequest(
     const {
       redirect,
       status,
+      json,
       props: __routeProps,
       data: __serverData,
       globalData: __globalData,
@@ -86,8 +88,12 @@ async function handleRequest(
       return;
     }
 
+    if (json) {
+      return res.json(json);
+    }
+
     globalData = __globalData;
-    serverData = __serverData;
+    serverData = { [req.path]: __serverData };
     routeProps = __routeProps;
   }
 

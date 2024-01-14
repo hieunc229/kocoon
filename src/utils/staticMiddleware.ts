@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 
 const exts =
@@ -13,23 +14,28 @@ export function staticMiddleware(props: {
 }) {
   const { location, extensions = "" } = props;
 
-  const allowedExts = `${exts},${
-    process.env.NODE_ENV === "production" ? `${prodExts},` : ""
-  }${extensions}`
-    .split(",")
-    .filter(Boolean);
+  // const allowedExts = `${exts},${
+  //   process.env.NODE_ENV === "production" ? `${prodExts},` : ""
+  // }${extensions}`
+  //   .split(",")
+  //   .filter(Boolean);
 
   return function (req: Request, res: Response, next: NextFunction) {
-    const parts = req.path.split(".");
-    const ext = parts.pop();
+    // const parts = req.path.split(".");
+    // const ext = parts.pop();
 
-    // // rewrite index
+    // rewrite index
     // if (req.path.match(/index.html$/)) {
     //   return res.sendFile(path.join(location, "index.html"));
     // }
-
-    if (parts.length && ext && allowedExts.indexOf(ext) !== -1) {
-      return res.sendFile(path.join(location, req.path));
+    if (req.path.split("/").pop()) {
+      const filePath = path.join(
+        location,
+        (req.params?.path as string) || req.path
+      );
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
     }
     next();
   };

@@ -8,11 +8,13 @@ import registerClientSSR from "./clientSSR/registerClientSSR";
 import registerClientSPA from "./clientSPA/registerClientSPA";
 
 import { Express } from "express";
-import { staticMiddleware } from "./utils/handlers";
+import { staticMiddleware } from "./utils/staticMiddleware";
 
 export default async function Rumbo(app: Express, options: RumboProps) {
+  if (process.env.NODE_ENV === "development") {
+    console.clear();
+  }
   process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");
-  console.clear();
   console.log(chalk.gray("Rumbo is starting..."));
 
   const {
@@ -22,7 +24,8 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     listen,
     routes,
     staticRoutes,
-    staticExtensions
+    staticExtensions,
+    statics,
   } = options;
 
   const publicPath = publicDir || path.join(rootDir, "../public");
@@ -42,7 +45,22 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     fse.copySync(publicPath, distDir);
   }
 
-  app.get("/*", staticMiddleware({ location: distDir, extensions: staticExtensions }));
+  if (statics) {
+    statics.forEach((item) => {
+      app.get(
+        item.path,
+        staticMiddleware({
+          location: item.location,
+          extensions: staticExtensions,
+        })
+      );
+    });
+  }
+
+  app.get(
+    "/*",
+    staticMiddleware({ location: distDir, extensions: staticExtensions })
+  );
 
   for (const client of apps) {
     const staticImports: any = staticRoutes ? staticRoutes[client.route] : null;
@@ -78,7 +96,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           staticImports,
           ...client,
           excludePaths: client.excludePaths || [],
-          appProps: options
+          appProps: options,
         });
         break;
       case "static":
@@ -92,7 +110,6 @@ export default async function Rumbo(app: Express, options: RumboProps) {
       { host: "0.0.0.0", port: 3000 },
       typeof listen === "object" ? listen : {}
     );
-
     app.listen(port, host, () => {
       console.log(chalk.green(`Server available on ${host}:${port}`));
     });
