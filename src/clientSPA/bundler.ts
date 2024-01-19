@@ -28,8 +28,8 @@ export default async function bundleClientSPA(
   const entries = [
     {
       filePath: location + ".tsx",
-      handlePath: `${route}/*`,
-      staticImport: require(path.join(location, "index")),
+      handlePath: `${route}*`,
+      // staticImport: require(path.join(location, "index")),
     },
   ];
 
@@ -46,16 +46,9 @@ export default async function bundleClientSPA(
     "webpack.config.client"
   );
 
-  try {
-    dfConfigs = require(clientConfigPath).default || {};
-    // debug &&
-    //   console.log(
-    //     `staticImports spa.userConfigFile ${formatClassName(
-    //       route
-    //     )} (${clientConfigPath})`
-    //   );
-  } catch (e) {
-    // no client config
+  // Must be js file
+  if (fs.existsSync(clientConfigPath + ".js")) {
+    dfConfigs = require(clientConfigPath) || {};
   }
 
   let mode: WebpackMode =
@@ -85,7 +78,6 @@ export default async function bundleClientSPA(
     dfConfigs
   );
 
-  debug && console.log(chalk.green(`[Client SPA]`, route));
 
   const compiler = webpack(configs);
 

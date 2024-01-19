@@ -151,7 +151,7 @@ function getRegisterServerPath(options: {
 
 export const layoutRegex = /_layout$/i;
 export const excludeRegex = /_(layout|middleware|context|container)$/i;
-export const excludeWithoutLayoutRegex = /_(context|middleware|container)$/i;
+export const excludeWithoutLayoutRegex = /_(context|container)$/i;
 export function importPathsToClientRoutes(props: {
   paths: RumboStaticRoute[];
 }) {

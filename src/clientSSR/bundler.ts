@@ -27,13 +27,11 @@ export default function bundleClientSSR(props: BundleClientSSRProps) {
   );
   // // @ts-ignore
   let dfConfigs = {};
-  try {
+  // Must be js file
+  if (fs.existsSync(clientConfigPath + ".js")) {
     dfConfigs = require(clientConfigPath) || {};
-  } catch (e) {
-    console.log(e);
-    // no client config
   }
-
+  
   let mode: WebpackMode =
     webpackConfigs?.mode ||
     (process.env.NODE_ENV as WebpackMode) ||

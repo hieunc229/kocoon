@@ -7,7 +7,7 @@ const defaultContextValues = {
   session: null,
 };
 
-export const AppContext = createContext<AppContextProps>(defaultContextValues);
+export const AppContext = createContext<RumboAppContextProps>(defaultContextValues);
 
 type Props = {
   children: any;
@@ -20,7 +20,7 @@ type Props = {
 var currentRoute: string;
 
 export class AppContextProvider extends Component<Props> {
-  override state: AppContextProps;
+  override state: RumboAppContextProps;
   routeChangeListener: any;
   mouted = false;
 

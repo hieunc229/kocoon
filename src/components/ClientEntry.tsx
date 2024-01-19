@@ -24,11 +24,11 @@ function ClientApp(props: Props) {
   if (props.settings.clientUseRouter) {
     const currentRoute = routes.find(
       (item) => item.path === props.settings.path
-    );
+    ) || routes[0];
 
-    if (!currentRoute) {
-      return <div>No component matched</div>;
-    }
+    // if (!currentRoute) {
+    //   return <div>No component matched</div>;
+    // }
 
     return (
       currentRoute.element ||

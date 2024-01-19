@@ -1,5 +1,6 @@
 import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 
 import { formatClassName } from "./utils/text";
 import merge from "webpack-merge";

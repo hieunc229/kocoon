@@ -1,4 +1,4 @@
-import {AppContextProvider} from "rumbo/components/context";
+export default `import {AppContextProvider} from "rumbo/components/context";
 
 type AppProps = { 
   globalData: any, 
@@ -15,4 +15,4 @@ export default function App(props: AppProps) {
   return (<AppContextProvider serverData={data} session={session}>
     {{content}}
   </AppContextProvider>);
-}
+}`

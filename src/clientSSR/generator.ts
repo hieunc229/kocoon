@@ -3,6 +3,7 @@ import path from "path";
 import chalk from "chalk";
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
+import templateEntry from "../templates/entry.tpl";
 
 export default function generateApp(props: {
   publicPath: string;
@@ -20,14 +21,7 @@ export default function generateApp(props: {
     }
   );
 
-  const appTemplate = fs.readFileSync(
-    path.join(__dirname, "../templates/templateEntry.tpl"),
-    {
-      encoding: "utf-8",
-    }
-  );
-
-  const appClassContent = appTemplate.replace(
+  const appClassContent = templateEntry.replace(
     "{{content}}",
     htmlTemplate
       .replace(
@@ -81,7 +75,7 @@ export function getAppComponent(props: {
     });
   }
 
-  // debug && console.log(`staticImports ssr.generate(missing) ${componentPath}`);
+  // props.debug && console.log(`staticImports ssr.generate(missing) ${route}: ${componentPath}`);
 
   return require(componentPath);
 }

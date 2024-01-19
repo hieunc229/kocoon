@@ -1,51 +1,15 @@
 import chalk from "chalk";
 import bundleClientSPA from "./bundler";
+import { clientSPAHandler } from "./handler";
 
-import { createElement } from "react";
-import { Express, Request, Response } from "express";
-import { renderToPipeableStream } from "react-dom/server";
+export default async function registerClientSPA(
+  props: RumboRegisterClientSPAProps
+): Promise<any> {
 
-import { formatClassName } from "../utils/text";
-import { getAppComponent } from "../clientSSR/generator";
-
-type Props = RumboBundleClientSPAProps & {
-  app: Express;
-  excludePaths: string[];
-};
-
-export default async function registerClientSPA(props: Props): Promise<any> {
-  const {
-    app,
-    debug = false,
-    route,
-    publicPath = "",
-    rootDir,
-  } = props;
-  
+  const { debug = false, route } = props;
+  debug && console.log(chalk.green(`[Client SPA]`, route));
   await bundleClientSPA(props);
-  
-
-  const AppComponent = getAppComponent({
-    publicPath,
-    route,
-    debug,
-    rootDir,
-  }).default;
-
-  app.get(`${route}*`, function (_: Request, res: Response) {
-    const { pipe } = renderToPipeableStream(createElement(AppComponent), {
-      bootstrapScripts: [`/static/${formatClassName(route)}.js`],
-      onShellReady() {
-        res.setHeader("content-type", "text/html");
-        pipe(res);
-      },
-      onError(err: any, info) {
-        console.log(chalk.red("Failed to render"), { err, info });
-        res.status(500).send(err.toString());
-      },
-    });
-  });
-
+  clientSPAHandler(props);
 
   // createClientSSRRequest(
   //   { handler },

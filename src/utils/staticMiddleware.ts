@@ -28,10 +28,10 @@ export function staticMiddleware(props: {
     // if (req.path.match(/index.html$/)) {
     //   return res.sendFile(path.join(location, "index.html"));
     // }
-    if (req.path.split("/").pop()) {
+    if (req.originalUrl.includes(".")) {
       const filePath = path.join(
         location,
-        (req.params?.path as string) || req.path
+        (req.params?.path as string) || req.originalUrl
       );
       if (fs.existsSync(filePath)) {
         return res.sendFile(filePath);

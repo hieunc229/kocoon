@@ -17,7 +17,6 @@ import {
   createStaticHandler,
   createStaticRouter,
 } from "react-router-dom/server";
-import { AppContextProvider } from "../components/context";
 
 // Fix useLayoutEffect warning message on server
 React.useLayoutEffect = React.useEffect;
@@ -121,7 +120,7 @@ async function handleRequest(
     }
   }
 
-  const staticHandler = createStaticHandler(staticRoutes);
+  const staticHandler = createStaticHandler(staticRoutes) as StaticHandler;
 
   // If client already have router, server mustn't include a router
   let AppContainer = clientUseRouter
@@ -134,6 +133,7 @@ async function handleRequest(
         routeProps,
       })
     : await getAppWithRouter({
+        res,
         serverData,
         AppComponent,
         staticHandler,
@@ -193,6 +193,7 @@ function getAppWithoutRouter(props: {
 
 async function getAppWithRouter(props: {
   req: ExpressReq;
+  res: Response;
   staticHandler: StaticHandler;
   serverData: any;
   globalData: any;
@@ -201,15 +202,18 @@ async function getAppWithRouter(props: {
 }) {
   const {
     req,
+    res,
     staticHandler,
     serverData,
     AppComponent,
     globalData,
     routeProps,
   } = props;
-  const fetchRequest = createFetchRequest(req);
-  const context: any = await staticHandler.query(fetchRequest);
-  const router = createStaticRouter(staticHandler.dataRoutes, context);
+
+  const {query, dataRoutes} = createStaticHandler(staticHandler.dataRoutes);
+  const fetchReq = createFetchRequest(req, res);
+  const context = await query(fetchReq) as any;
+  const router = createStaticRouter(dataRoutes, context);
 
   return (
     <AppComponent

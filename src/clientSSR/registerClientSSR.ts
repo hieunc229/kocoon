@@ -85,7 +85,7 @@ export default async function registerClientSSR(props: Props) {
       };
     });
 
-  const staticHandler = createStaticHandler(staticRoutes);
+  const staticHandler = createStaticHandler(staticRoutes) as any;
   const AppComponent = (
     staticImports
       ? staticImports.__rumboClientSSR.staticImport

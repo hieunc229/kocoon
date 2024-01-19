@@ -11,3 +11,9 @@ type RumboBundleClientSPAProps = {
   };
   webpackConfigs?: webpack.Configuration;
 };
+
+type RumboRegisterClientSPAProps = RumboBundleClientSPAProps & {
+  app: Express;
+  excludePaths: string[];
+  clientUseRouter?: boolean;
+};

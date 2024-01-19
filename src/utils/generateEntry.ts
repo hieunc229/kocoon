@@ -1,10 +1,12 @@
 import path from "path";
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 
 import { formatClassName } from "./text";
 import { rumboTempDir } from "../configs";
 import { excludeRegex, getLayoutRoute } from "./route";
+
+import templateClient from "../templates/client.tpl";
 
 export function generateEntry(props: GenerateEntryProps, options?: { includeImport?: boolean }) {
   const { routes, route, appProps } = props;
@@ -18,14 +20,7 @@ export function generateEntry(props: GenerateEntryProps, options?: { includeImpo
     filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
   }));
 
-  const templateEntry = readFileSync(
-    path.join(__dirname, "../templates/templateClient.tpl"),
-    {
-      encoding: "utf-8",
-    }
-  );
-
-  const content = templateEntry
+  const content = templateClient
     .replace(
       "{{imports}}",
       entries

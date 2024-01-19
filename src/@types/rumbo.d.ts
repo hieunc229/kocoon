@@ -40,6 +40,6 @@ type RumboProps = {
 };
 
 type RumboStaticRoute<T = ResolveImportProps> = T & {
-  staticImport: any;
+  staticImport?: any;
   appComponent?: any;
 };

@@ -1,4 +1,4 @@
-import { createElement, StrictMode } from "react";
+export default `import { createElement, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { AppContainer } from 'react-hot-loader';
 import { render } from "@hot-loader/react-dom";
@@ -36,6 +36,10 @@ if (typeof document !== "undefined") {
           />
         </AppContainer>
       </StrictMode>, root);
+
+      if (module['hot']) {
+        module['hot'].accept()
+      }
     } else {
       hydrateRoot(
         root,
@@ -51,13 +55,9 @@ if (typeof document !== "undefined") {
         </StrictMode>
       );
     }
-
-    if (module['hot']) {
-      module['hot'].accept()
-    }
   }
 }
 
 if (pwaEnabled) {
   register()
-}
+}`

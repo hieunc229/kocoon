@@ -57,10 +57,11 @@ export default async function Rumbo(app: Express, options: RumboProps) {
     });
   }
 
-  app.get(
+  app.use(
     "/*",
     staticMiddleware({ location: distDir, extensions: staticExtensions })
   );
+  console.log("Register Static")
 
   for (const client of apps) {
     const staticImports: any = staticRoutes ? staticRoutes[client.route] : null;
