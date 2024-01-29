@@ -1,6 +1,5 @@
 import webpack from "webpack";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 
 import { formatClassName } from "./utils/text";
 import merge from "webpack-merge";
@@ -65,7 +64,7 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
             {
               test: /\.(scss|sass|css)$/i,
               use: [
-                "style-loader",
+                // "style-loader",
                 {
                   loader: MiniCssExtractPlugin.loader,
                   options: {
@@ -107,16 +106,18 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
     },
   };
 
-  
   if (mode === "production") {
     configs = merge(configs, {
       optimization: {
         minimize: true,
+        // minimizer: [new CssMinimizerPlugin()]
       },
     });
   } else {
+    // @ts-ignore
+    configs.module?.rules[1].oneOf[1].use.splice(0, 0, "style-loader");
+
     configs = merge(configs, {
-      // devtool: "inline-source-map",
       devtool: "cheap-module-source-map",
       plugins: [new webpack.HotModuleReplacementPlugin()],
       resolve: {
