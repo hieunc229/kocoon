@@ -22,7 +22,6 @@ export function resolveImports<T = ResolveImportProps>(options: {
       const filePath = path.join(route, pathRoute.replace(route, ""), p);
 
       if (fs.statSync(fileAbsPath).isDirectory()) {
-        
         if (!excludePaths.includes(p)) {
           registerPath(filePath, fileAbsPath);
         }
@@ -95,6 +94,27 @@ function sortServerPath(
   // Sort by method priority first
   if (methodA !== methodB) {
     return methodA - methodB;
+  }
+
+  const apathIndex = a.handlePath.lastIndexOf("/");
+  const bpathIndex = b.handlePath.lastIndexOf("/");
+
+  if (
+    a.handlePath.substring(0, apathIndex) ===
+    b.handlePath.substring(0, bpathIndex)
+  ) {
+    if (
+      a.handlePath.substring(apathIndex).includes(":") &&
+      !b.handlePath.substring(bpathIndex).includes(":")
+    ) {
+      return -1;
+    }
+    if (
+      !a.handlePath.substring(apathIndex).includes(":") &&
+      b.handlePath.substring(bpathIndex).includes(":")
+    ) {
+      return -1;
+    }
   }
 
   // If methods are the same or both are 'all', compare paths
