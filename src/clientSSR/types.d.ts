@@ -21,6 +21,11 @@ type ServerProps = {
   globalData?: any;
   status?: number;
   redirect?: string;
+  next?: boolean,
+  document?: {
+    headers?: {[name:string]: string | number},
+    content: string
+  }
 };
 
 type ClientRouteProps = {

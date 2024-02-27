@@ -3,6 +3,7 @@ type RumboAppType = "server" | "client-ssr" | "client-spa" | "static";
 type RumboAppProps = {
   location: string;
   type: RumboAppType;
+  pwaEnabled?: boolean;
 
   /**
    * Enable React Router (react-router-dom)

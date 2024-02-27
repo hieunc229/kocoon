@@ -28,7 +28,7 @@ export default async function registerServer(options: {
     excludePaths = [],
   } = options;
 
-  debug && console.log(chalk.green(`[Server]`, route));
+  // debug && console.log(chalk.green(`[Server]`, route));
 
   const paths = staticImports
     ? Object.entries(staticImports).map(([, item]) => item)
@@ -70,15 +70,15 @@ export default async function registerServer(options: {
         [pHandlePath, [handlers.default, ...classHandlers]]
       );
 
-      debug &&
-        console.log(
-          chalk.gray(
-            `- [${pMethod.substring(0,3).toUpperCase()}]`,
-            pHandlePath,
-            // pFilePath,
-            classHandlers.length ? `(${classHandlers.length} extra handlers)` : ""
-          )
-        );
+      // debug &&
+      //   console.log(
+      //     chalk.gray(
+      //       `- [${pMethod.substring(0,3).toUpperCase()}]`,
+      //       pHandlePath,
+      //       // pFilePath,
+      //       classHandlers.length ? `(${classHandlers.length} extra handlers)` : ""
+      //     )
+      //   );
     } else {
       console.log(
         chalk.redBright(
@@ -89,7 +89,7 @@ export default async function registerServer(options: {
     }
   }
 
-  console.log(chalk.gray(`✓ Server routes initiated`));
+  console.log(chalk.gray(`✓`, route));
 }
 
 // function sortPath(a: PathProps, b: PathProps) {

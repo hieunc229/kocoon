@@ -7,7 +7,8 @@ const defaultContextValues = {
   session: null,
 };
 
-export const AppContext = createContext<RumboAppContextProps>(defaultContextValues);
+export const AppContext =
+  createContext<RumboAppContextProps>(defaultContextValues);
 
 type Props = {
   children: any;

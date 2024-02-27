@@ -1,20 +1,21 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
-import webpack from "webpack";
-
-import { merge } from "webpack-merge";
-import { formatClassName } from "../utils/text";
-import { getWebpackReactConfigs } from "../webpack.config.client";
-
+import webpack, { Stats, Configuration } from "webpack";
 import webpackHotMiddleware from "webpack-hot-middleware";
 import webpackDevelopmentMiddleware from "webpack-dev-middleware";
+
+import { merge } from "webpack-merge";
+import { InjectManifest, GenerateSW } from "workbox-webpack-plugin";
+
+import { formatClassName } from "../utils/text";
 import { generateEntry } from "../utils/generateEntry";
 import { importPathsToClientRoutes } from "../utils/route";
+import { getWebpackReactConfigs } from "../webpack.config.client";
 
 export default async function bundleClientSPA(
   props: RumboBundleClientSPAProps
-): Promise<any> {
+): Promise<Stats | undefined> {
   const {
     publicPath = "./public",
     location,
@@ -23,6 +24,7 @@ export default async function bundleClientSPA(
     debug,
     rootDir,
     webpackConfigs,
+    pwaEnabled = false,
   } = props;
 
   const entries = [
@@ -33,14 +35,7 @@ export default async function bundleClientSPA(
     },
   ];
 
-  const { entryPath } = generateEntry({
-    appProps: { renderStrategy: "auto", routes: {}, staticRoutes: [] } as any,
-    route,
-    routes: importPathsToClientRoutes({ paths: entries }),
-    entries,
-  });
-
-  let dfConfigs = {};
+  let dfConfigs: Configuration = {};
   const clientConfigPath = path.join(
     path.resolve("./"),
     "webpack.config.client"
@@ -52,52 +47,82 @@ export default async function bundleClientSPA(
   }
 
   let mode: WebpackMode =
+    dfConfigs.mode ||
     webpackConfigs?.mode ||
     (process.env.NODE_ENV as WebpackMode) ||
     "development";
 
+  const { entryPath } = generateEntry(
+    {
+      appProps: {
+        renderStrategy: "auto",
+        routes: {},
+        staticRoutes: [],
+        pwaEnabled,
+      } as any,
+      route,
+      routes: importPathsToClientRoutes({ paths: entries }),
+      entries,
+    },
+    { development: mode === "development" }
+  );
+
+  let entry = { [formatClassName(route)]: [`./${entryPath}`] };
+  let plugins = [];
+
+  if (pwaEnabled && mode === "production") {
+    // entry["service-worker"] = [path.join(rootDir, "service-worker.ts")];
+    plugins.push(
+      new GenerateSW({
+        skipWaiting: false,
+        clientsClaim: true,
+        swDest: path.join(distDir, "service-worker.js"),
+        maximumFileSizeToCacheInBytes: 10000000,
+
+        include: [/.html$/, /.js$/, /.css$/, /.jpg$/, /.png$/, /.ico$/],
+      })
+      // new InjectManifest({
+      //   compileSrc: true,
+      //   swSrc: path.join(rootDir, "service-worker.js"),
+      //   swDest: path.join(distDir, "service-worker.js"),
+      //   maximumFileSizeToCacheInBytes: 10000000,
+      //   include: [/.html$/, /.js$/, /.css$/, /.jpg$/, /.png$/, /.ico$/]
+      // })
+    );
+  }
+
   const clientConfigs = getWebpackReactConfigs({
     mode,
     publicPath,
-    entry: [`./${entryPath}`],
+    entry,
     route,
     distDir,
   });
 
-  // console.log(path.join(distDir, route, "index.html"), path.join(distDir, "index.html"), path.join(distDir, "static"))
-
-  const configs: webpack.Configuration = merge(
-    clientConfigs,
-    {
-      output: {
-        path: path.join(distDir, "/static"),
-        filename: `${formatClassName(route)}.js`,
-        publicPath: "/static",
-      },
-    },
-    dfConfigs
-  );
-
+  const configs: Configuration = merge(clientConfigs, dfConfigs, { plugins });
 
   const compiler = webpack(configs);
 
-  if (process.env.NODE_ENV === "development") {
+  if (mode === "development") {
     props.app
       .use(
         webpackDevelopmentMiddleware(compiler, {
           publicPath: configs.output?.publicPath,
+          stats: true,
+          serverSideRender: true,
         })
       )
       .use(
         webpackHotMiddleware(compiler, {
-          path: path.join(route, "__webpack_hmr"),
+          path: path.join(route.replace("*", ""), "__webpack_hmr"),
         })
       );
-    return Promise.resolve();
+    return Promise.resolve(undefined);
   }
 
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
+      let messageStr = `✓ ${route}`;
       if (err) {
         console.log(chalk.red("Packing clientSPA error: ", err.toString()));
         return reject(err);
@@ -113,7 +138,7 @@ export default async function bundleClientSPA(
         });
         console.log(chalk.red(errorStr));
         fs.writeFileSync(
-          path.join(rootDir, "rumbo.clientSPA-error.log"),
+          path.join(rootDir, "../rumbo.clientSPA-error.log"),
           errorStr
         );
 
@@ -122,23 +147,23 @@ export default async function bundleClientSPA(
       }
 
       if (stats?.compilation.warnings.length) {
-        console.log(chalk.gray("Packing completed with warnings"));
         let errorStr = "";
+        messageStr += ` (${stats?.compilation.warnings.length} warnings)`;
+
         stats?.compilation.warnings.forEach((err, i) => {
-          errorStr += `--- Error ${i + 1} ---\n: ${
+          // console.log(chalk.gray(`--- Warning ${i}: ${err.message}`));
+          errorStr += `  - Warning ${i + 1} ---\n: ${
             err.stack
           }\n--- End of warning ${i + 1} ---\n`;
         });
-        console.log(chalk.gray(errorStr));
         fs.writeFileSync(
-          path.join(rootDir, "rumbo.clientSPA-warning.log"),
+          path.join(rootDir, "../rumbo.clientSPA-warning.log"),
           errorStr
         );
-        return acept({});
       }
 
-      console.log(chalk.gray(`- Pack SPA client ${route} completed`));
-      acept({});
+      console.log(chalk.gray(messageStr));
+      acept(stats);
     });
   });
 }

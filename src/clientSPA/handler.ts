@@ -1,23 +1,28 @@
 import chalk from "chalk";
 import path from "path";
 
-import fs from "fs";
 import { createElement } from "react";
-import { Request, Response } from "express";
-import { renderToPipeableStream } from "react-dom/server";
+import { NextFunction, Request, Response } from "express";
+import { renderToPipeableStream, renderToString } from "react-dom/server";
 
 import { formatClassName } from "../utils/text";
 import { getAppComponent } from "../clientSSR/generator";
 import { isPromise } from "util/types";
+import type { Stats } from "webpack";
 
-export function clientSPAHandler(props: RumboRegisterClientSPAProps) {
+export function clientSPAHandler(
+  props: RumboRegisterClientSPAProps,
+  stats?: Stats
+) {
   const {
     app,
     debug = false,
     route,
     publicPath = "",
     rootDir,
+    pwaEnabled = false,
     clientUseRouter,
+    distDir,
   } = props;
 
   const { default: AppComponent } = getAppComponent({
@@ -25,6 +30,7 @@ export function clientSPAHandler(props: RumboRegisterClientSPAProps) {
     route,
     debug,
     rootDir,
+    pwaEnabled,
   });
 
   let getServerProps: any = null;
@@ -33,58 +39,82 @@ export function clientSPAHandler(props: RumboRegisterClientSPAProps) {
     getServerProps = meta.getServerProps;
   } catch (err) {}
 
-  app.get(`${route}*`, async function (req: Request, res: Response) {
-    let serverData = null;
-    let globalData = null;
-    let routeProps = null;
-    if (getServerProps) {
-      const fn = getServerProps(req);
+  var statsJson = stats?.toJson();
 
-      const {
-        redirect,
-        status,
-        json,
-        props: __routeProps,
-        data: __serverData,
-        globalData: __globalData,
-      } = (isPromise(fn) ? await fn : fn) as ServerProps;
-
-      if (status) {
-        res.status(status);
+  app.get(
+    `${route}*`,
+    async function (req: Request, res: Response, next: NextFunction) {
+      if (!statsJson && res.locals.webpack) {
+        statsJson = res.locals.webpack.devMiddleware.stats.toJson();
       }
 
-      if (redirect) {
-        res.redirect(redirect);
-        return;
+      let serverData = null;
+      let globalData = null;
+      let routeProps = null;
+      if (getServerProps) {
+        const fn = getServerProps(req, res, next);
+
+        const {
+          redirect,
+          status,
+          json,
+          props: __routeProps,
+          data: __serverData,
+          globalData: __globalData,
+          next: __next,
+        } = (isPromise(fn) ? await fn : fn) as ServerProps;
+
+        if (status) {
+          res.status(status);
+        }
+
+        if (__next) {
+          return next();
+        }
+
+        if (redirect) {
+          res.redirect(redirect);
+          return;
+        }
+
+        if (json) {
+          return res.json(json);
+        }
+
+        globalData = __globalData;
+        serverData = { [req.path]: __serverData };
+        routeProps = __routeProps;
       }
 
-      if (json) {
-        return res.json(json);
-      }
-
-      globalData = __globalData;
-      serverData = { [req.path]: __serverData };
-      routeProps = __routeProps;
-    }
-
-    const { pipe } = renderToPipeableStream(
-      createElement(AppComponent, {
-        settings: { clientUseRouter, path: req.path },
+      let AppContainer = createElement(AppComponent, {
+        settings: {
+          clientUseRouter,
+          path: req.path,
+          assets: statsJson?.assets
+            ?.filter((item) => item.name.endsWith(".css"))
+            .map((item) => `/static/${item.name}`),
+        },
         globalData,
         serverData,
-        // routeProps,
-      }),
-      {
-        bootstrapScripts: [`/static/${formatClassName(route)}.js`],
+      });
+
+      renderToString(AppContainer);
+
+      const { pipe } = renderToPipeableStream(AppContainer, {
+        bootstrapScripts: statsJson?.assets
+          ?.filter((item) => item.name.endsWith(".js"))
+          .map((item) => `/static/${item.name}`),
         onShellReady() {
           res.setHeader("content-type", "text/html");
+        },
+        onAllReady() {
           pipe(res);
         },
         onError(err: any, info) {
           console.log(chalk.red("Failed to render"), { err, info });
           res.status(500).send(err.toString());
         },
-      }
-    );
-  });
+      });
+    }
+  );
 }

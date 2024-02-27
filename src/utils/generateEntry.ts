@@ -8,32 +8,62 @@ import { excludeRegex, getLayoutRoute } from "./route";
 
 import templateClient from "../templates/client.tpl";
 
-export function generateEntry(props: GenerateEntryProps, options?: { includeImport?: boolean }) {
+export function generateEntry(
+  props: GenerateEntryProps,
+  options: { includeImport?: boolean; development: boolean }
+) {
   const { routes, route, appProps } = props;
-  const { includeImport = false } = options || {}
+  const { includeImport = false, development } = options || {};
 
   const { renderStrategy = "auto", pwaEnabled = false } = appProps;
   const entries = props.entries.map((e) => ({
     ...e,
-    import: includeImport ? require(e.filePath.replace(/\.(js|ts|tsx)$/g, "")) : undefined,
+    import: includeImport
+      ? require(e.filePath.replace(/\.(js|ts|tsx)$/g, ""))
+      : undefined,
     name: formatClassName(e.handlePath),
     filePath: e.filePath.replace(/\.(js|ts|tsx)$/g, ""),
   }));
 
+  const importPaths = entries.map(
+    (item) =>
+      `import { default as ${item.name}${
+        item.import?.layoutProps
+          ? `, layoutProps as ${item.name}_layoutProps`
+          : ""
+      } } from "${item.filePath}"`
+  );
+
+  if (pwaEnabled) {
+    importPaths.push(
+      `import { register } from "rumbo/serviceWorkerRegistration";`
+    );
+  }
+
+  if (development) {
+    importPaths.push(
+      `import { AppContainer } from 'react-hot-loader';`,
+      `import { render } from "@hot-loader/react-dom";`
+    );
+  } else {
+    importPaths.push(`import { hydrateRoot, createRoot } from "react-dom/client";`)
+  }
+
+  let renderContent = development
+    ? `render(
+    <StrictMode>
+      <AppContainer>{ClientComponent}</AppContainer>
+    </StrictMode>,
+    root
+  );
+
+  if (module["hot"]) {
+    module["hot"].accept();
+  }`
+    : "createRoot(root).render(<StrictMode>{ClientComponent}</StrictMode>);";
+
   const content = templateClient
-    .replace(
-      "{{imports}}",
-      entries
-        .map(
-          (item) =>
-            `import { default as ${item.name}${
-              item.import?.layoutProps
-                ? `, layoutProps as ${item.name}_layoutProps`
-                : ""
-            } } from "${item.filePath}"`
-        )
-        .join("\n")
-    )
+    .replace("{{imports}}", importPaths.join("\n"))
     .replace(/{{htmlComponent}}/g, "<RouterProvider router={router} />")
     .replace(
       "{{routes}}",
@@ -54,7 +84,8 @@ export function generateEntry(props: GenerateEntryProps, options?: { includeImpo
         .join(",")
     )
     .replace("<html", "<!DOCTYPE html>\n<html")
-    .replace(`pwaEnabled`, `${pwaEnabled}`)
+    .replace(`{{pwaEnabled}}`, pwaEnabled ? "register()" : "")
+    .replace(`{{render}}`, renderContent)
     .replace(`NODE_ENV`, `"${process.env.NODE_ENV}"`)
     .replace(`renderStrategy`, `"${renderStrategy}"`);
 
@@ -69,5 +100,5 @@ export function generateEntry(props: GenerateEntryProps, options?: { includeImpo
 
   writeFileSync(entryPath, content);
 
-  return { entryPath }
+  return { entryPath };
 }

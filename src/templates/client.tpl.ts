@@ -1,12 +1,7 @@
 export default `import { createElement, StrictMode } from "react";
-import { hydrateRoot } from "react-dom/client";
-import { AppContainer } from 'react-hot-loader';
-import { render } from "@hot-loader/react-dom";
 
 import ClientEntry from "rumbo/components/ClientEntry";
 import ErrorBoundary from "rumbo/components/ErrorBoundary";
-import { register } from "rumbo/serviceWorkerRegistration";
-
 
 {{imports}}
 
@@ -22,42 +17,19 @@ if (typeof document !== "undefined") {
     globalData &&
       Object.entries(globalData).forEach(([k, v]) => (window[k] = v));
     
-    // @ts-ignore
-    if (NODE_ENV === "development" || renderStrategy === "render") {
-      render(<StrictMode>
-        <AppContainer>
-          <ClientEntry
-            wrapper={__wrapper}
-            routes={routes}
-            settings={settings}
-            routeProps={routeProps}
-            session={session}
-            data={data}
-          />
-        </AppContainer>
-      </StrictMode>, root);
+    const ClientComponent = (
+      <ClientEntry
+        wrapper={__wrapper}
+        routes={routes}
+        settings={settings}
+        routeProps={routeProps}
+        session={session}
+        data={data}
+      />
+    );
 
-      if (module['hot']) {
-        module['hot'].accept()
-      }
-    } else {
-      hydrateRoot(
-        root,
-        <StrictMode>
-          <ClientEntry
-            wrapper={__wrapper}
-            routes={routes}
-            settings={settings}
-            routeProps={routeProps}
-            session={session}
-            data={data}
-          />
-        </StrictMode>
-      );
-    }
+    {{render}}
+    {{pwaEnabled}}
   }
 }
-
-if (pwaEnabled) {
-  register()
-}`
+`

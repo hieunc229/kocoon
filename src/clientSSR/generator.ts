@@ -1,9 +1,10 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
+import templateEntry from "../templates/entry.tpl";
+
 import { rumboTempDir } from "../configs";
 import { formatClassName } from "../utils/text";
-import templateEntry from "../templates/entry.tpl";
 
 export default function generateApp(props: {
   publicPath: string;
@@ -11,8 +12,10 @@ export default function generateApp(props: {
   templatePath?: string;
   route: string;
   debug: boolean;
+  pwaEnabled?: boolean;
 }) {
-  const { publicPath, templatePath, componentPath, route, debug } = props;
+  const { publicPath, templatePath, componentPath, route, debug } =
+    props;
 
   const htmlTemplate = fs.readFileSync(
     templatePath || `${publicPath}/index.html`,
@@ -34,7 +37,20 @@ export default function generateApp(props: {
       .replace(
         "</head>",
         // `<link href="/static/_.css" rel="stylesheet" /></head>`
-        `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" /></head>`
+        [
+          `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" />`,
+          // pwaEnabled ? `<link rel="manifest" href="/manifest.json" />`: false,
+          `</head>`,
+        ]
+          .filter(Boolean)
+          .join("")
+      )
+      // .replace("<head>", `<head><HelmetContent />`)
+      .replace(
+        "<head>",
+        `<head>{helmet.title.toComponent()}
+      {helmet.meta.toComponent()}
+      {helmet.link.toComponent()}`
       )
     // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
   );
@@ -58,6 +74,7 @@ export function getAppComponent(props: {
   templatePath?: string;
   route: string;
   debug: boolean;
+  pwaEnabled?: boolean;
 }) {
   const { rootDir, route } = props;
 

@@ -126,7 +126,7 @@ function getRegisterClientPath(options: {
   routePath: string;
 }): ResolveImportProps {
   const { filePath, routePath } = options;
-  let [name = ""] = routePath.split(".");
+  const name = routePath.substring(0, routePath.lastIndexOf("."))
   const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1");
 
   return {
@@ -139,8 +139,9 @@ function getRegisterServerPath(options: {
   filePath: string;
   routePath: string;
 }): ResolveImportServerProps {
-  const { filePath, routePath } = options;
-  let parts = (routePath.split(".").shift() || "").split("/");
+  const { filePath } = options;
+  const routePath = options.routePath.substring(0, options.routePath.lastIndexOf("."))
+  let parts = (routePath || "").split("/");
   let method = parts.pop();
   let name = parts.join("/");
 
@@ -190,7 +191,7 @@ export function importPathsToClientRoutes(props: {
     const isLayout = layoutRegex.test(pHandlePath);
     let data = {};
 
-    let rname = pHandlePath;
+    let rname = pHandlePath.replace(/\*+/, "*");
 
     if (isLayout) {
       data = {

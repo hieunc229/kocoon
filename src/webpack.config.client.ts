@@ -9,18 +9,29 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 type Props = {
   mode?: WebpackMode;
   publicPath: string;
-  entry: string[];
+  entry: any;
   route: string;
   distDir: string;
 };
 
-export function getWebpackReactConfigs(props: Props): webpack.Configuration {
-  let { mode, entry = [], route, distDir, publicPath } = props;
-  const isDevelopment = process.env.NODE_ENV === "development";
+export function getWebpackReactConfigs(
+  props: Props,
+  preConfigs?: webpack.Configuration
+): webpack.Configuration {
+  let { mode, route, entry, distDir, publicPath } = props;
+  const isDevelopment = (mode || process.env.NODE_ENV) === "development";
+  // let entry = props.entry[formatClassName(route)];
   if (isDevelopment) {
-    entry.push(
+    // entry.push(
+    //   "react-hot-loader/patch",
+    //   `webpack-hot-middleware/client?path=${path.join(route.replace("*", ""), "__webpack_hmr")}`
+    // );
+    entry[formatClassName(route)].push(
       "react-hot-loader/patch",
-      `webpack-hot-middleware/client?path=${path.join(route, "__webpack_hmr")}`
+      `webpack-hot-middleware/client?path=${path.join(
+        route.replace("*", ""),
+        "__webpack_hmr"
+      )}`
     );
   }
 
@@ -28,6 +39,13 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
     mode,
     name: route,
     entry,
+    output: {
+      path: path.join(distDir, "static"),
+      publicPath: "/static",
+      filename: "[name].[fullhash:8].js",
+      // sourceMapFilename: "[name].[fullhash:8].map",
+      chunkFilename: "[name].[fullhash:8]-[id].js",
+    },
     module: {
       rules: [
         {
@@ -40,7 +58,7 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
                 "@babel/preset-react",
                 "@babel/preset-typescript",
                 "@babel/preset-env",
-                "@babel/preset-flow",
+                "@babel/preset-flow"
               ],
             },
           },
@@ -50,12 +68,13 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
             {
               test: /\.module\.scss$/,
               use: [
-                MiniCssExtractPlugin.loader,
+                // MiniCssExtractPlugin.loader,
                 {
                   loader: "css-loader",
                   options: {
                     modules: true,
                     url: false,
+                    sourceMap: false
                   },
                 },
                 "sass-loader",
@@ -73,7 +92,7 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
                 },
                 {
                   loader: "css-loader",
-                  options: { url: false },
+                  options: { url: false, sourceMap: false },
                 },
                 "sass-loader",
                 "postcss-loader",
@@ -105,6 +124,10 @@ export function getWebpackReactConfigs(props: Props): webpack.Configuration {
       // runtimeChunk: "single",
     },
   };
+
+  if (preConfigs) {
+    configs = merge(configs, preConfigs);
+  }
 
   if (mode === "production") {
     configs = merge(configs, {

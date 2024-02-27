@@ -2,7 +2,11 @@ import chalk from "chalk";
 
 import { Request as ExpressReq, Response } from "express";
 import { StaticHandler } from "@remix-run/router";
-import { renderToPipeableStream } from "react-dom/server";
+import {
+  renderToPipeableStream,
+  renderToStaticMarkup,
+  renderToString,
+} from "react-dom/server";
 import { createFetchRequest } from "./utils";
 import { isPromise } from "util/types";
 import { createElement } from "react";
@@ -17,6 +21,7 @@ import {
   createStaticHandler,
   createStaticRouter,
 } from "react-router-dom/server";
+import { StatsCompilation } from "webpack";
 
 // Fix useLayoutEffect warning message on server
 React.useLayoutEffect = React.useEffect;
@@ -28,6 +33,7 @@ type ClientHandlerProps = {
   route: string;
   clientUseRouter: boolean;
   routes: { [path: string]: ClientRouteProps };
+  statsJson?: StatsCompilation;
 };
 
 export default function createClientSSRRequest(
@@ -61,11 +67,17 @@ async function handleRequest(
   res: Response
 ) {
   const { handler } = options.handlerProps;
-  const { AppComponent, route, routes, clientUseRouter } = options.props;
+  const { AppComponent, route, routes, clientUseRouter } =
+    options.props;
 
   let serverData = null;
   let globalData = null;
   let routeProps = null;
+
+  let statsJson = options.props.statsJson;
+  if (!statsJson && res.locals.webpack) {
+    statsJson = res.locals.webpack.devMiddleware.stats.toJson();
+  }
 
   if (handler.getServerProps) {
     const fn = handler.getServerProps(req as any);
@@ -73,6 +85,7 @@ async function handleRequest(
       redirect,
       status,
       json,
+      document,
       props: __routeProps,
       data: __serverData,
       globalData: __globalData,
@@ -89,6 +102,15 @@ async function handleRequest(
 
     if (json) {
       return res.json(json);
+    }
+
+    if (document) {
+      if (document.headers) {
+        Object.entries(document.headers).forEach(([k, v]) => {
+          res.setHeader(k, v);
+        });
+      }
+      return res.send(document.content);
     }
 
     globalData = __globalData;
@@ -121,6 +143,9 @@ async function handleRequest(
   }
 
   const staticHandler = createStaticHandler(staticRoutes) as StaticHandler;
+  const assets = statsJson?.assets
+    ?.filter((item) => item.name.endsWith(".css"))
+    .map((item) => `/static/${item.name}`);
 
   // If client already have router, server mustn't include a router
   let AppContainer = clientUseRouter
@@ -131,6 +156,7 @@ async function handleRequest(
         globalData,
         req,
         routeProps,
+        settings: { clientUseRouter: true, path: req.route.path, assets },
       })
     : await getAppWithRouter({
         res,
@@ -140,12 +166,20 @@ async function handleRequest(
         globalData,
         req,
         routeProps,
+        settings: { assets }
       });
 
+  renderToString(AppContainer);
+
   const { pipe } = renderToPipeableStream(AppContainer, {
-    bootstrapScripts: [`/static/${formatClassName(route)}.js`],
+    // bootstrapScripts: stats [`/static/${formatClassName(route)}.js`],
+    bootstrapScripts: statsJson?.assets
+      ?.filter((item) => item.name.endsWith(".js"))
+      .map((item) => `/static/${item.name}`),
     onShellReady() {
       res.setHeader("content-type", "text/html");
+    },
+    onAllReady() {
       pipe(res);
     },
     onError(err: any, info) {
@@ -162,6 +196,8 @@ function getAppWithoutRouter(props: {
   globalData: any;
   AppComponent: any;
   routeProps: any;
+  ExtraComponent?: any;
+  settings: any;
 }) {
   const {
     req,
@@ -170,6 +206,8 @@ function getAppWithoutRouter(props: {
     AppComponent,
     globalData,
     routeProps,
+    ExtraComponent,
+    settings,
   } = props;
 
   let current =
@@ -182,8 +220,9 @@ function getAppWithoutRouter(props: {
       globalData={globalData}
       session={null}
       routeProps={{ [req.route.path]: { props: routeProps } }}
-      settings={{ clientUseRouter: true, path: req.route.path }}
+      settings={settings}
     >
+      {ExtraComponent}
       {current.Component
         ? createElement(current.Component, routeProps)
         : current.element}
@@ -199,6 +238,8 @@ async function getAppWithRouter(props: {
   globalData: any;
   AppComponent: any;
   routeProps: any;
+  ExtraComponent?: any;
+  settings: any
 }) {
   const {
     req,
@@ -208,11 +249,13 @@ async function getAppWithRouter(props: {
     AppComponent,
     globalData,
     routeProps,
+    ExtraComponent,
+    settings
   } = props;
 
-  const {query, dataRoutes} = createStaticHandler(staticHandler.dataRoutes);
+  const { query, dataRoutes } = createStaticHandler(staticHandler.dataRoutes);
   const fetchReq = createFetchRequest(req, res);
-  const context = await query(fetchReq) as any;
+  const context = (await query(fetchReq)) as any;
   const router = createStaticRouter(dataRoutes, context);
 
   return (
@@ -221,7 +264,9 @@ async function getAppWithRouter(props: {
       globalData={globalData}
       session={null}
       data={serverData}
+      settings={settings}
     >
+      {ExtraComponent}
       <StaticRouterProvider context={context} router={router} />
     </AppComponent>
   );

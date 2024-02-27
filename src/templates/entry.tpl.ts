@@ -1,4 +1,5 @@
 export default `import {AppContextProvider} from "rumbo/components/context";
+import Helmet from "react-helmet";
 
 type AppProps = { 
   globalData: any, 
@@ -11,6 +12,7 @@ type AppProps = {
 
 export default function App(props: AppProps) {
   const { data, settings, children, globalData, session, routeProps } = props;
+  const helmet = Helmet.renderStatic();
 
   return (<AppContextProvider serverData={data} session={session}>
     {{content}}

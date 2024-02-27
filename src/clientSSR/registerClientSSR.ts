@@ -16,6 +16,7 @@ import {
   importPathsToClientRoutes,
   resolveImports,
 } from "../utils/route";
+import { Stats } from "webpack";
 
 type Props = {
   location: string;
@@ -24,10 +25,10 @@ type Props = {
   distDir: string;
   route: string;
   app: Express;
-  appProps: RumboProps,
+  appProps: RumboProps;
   debug?: boolean;
   clientUseRouter?: boolean;
-  excludePaths?: string[]
+  excludePaths?: string[];
   staticImports: null | {
     [subRoute: string]: RumboStaticRoute;
   };
@@ -45,10 +46,10 @@ export default async function registerClientSSR(props: Props) {
     clientUseRouter = false,
     staticImports,
     excludePaths = [],
-    appProps
+    appProps,
   } = props;
 
-  debug && console.log(chalk.green(`[Client SSR]`, route));
+  // debug && console.log(chalk.green(`[Client SSR]`, route));
 
   const paths: RumboStaticRoute[] = staticImports
     ? Object.entries(staticImports).map(([, item]) => item)
@@ -56,7 +57,7 @@ export default async function registerClientSSR(props: Props) {
         route,
         location,
         type: "client",
-        excludePaths
+        excludePaths,
       }).map((item) => {
         return {
           ...item,
@@ -92,10 +93,11 @@ export default async function registerClientSSR(props: Props) {
       : getAppComponent({ publicPath, route, debug, rootDir })
   ).default;
 
+  let stats: Stats | undefined;
 
   if (!staticImports) {
-    debug && console.log(chalk.gray("Bundle client..."));
-    await bundleClientSSR({
+    // debug && console.log(chalk.gray("Bundle client..."));
+    stats = await bundleClientSSR({
       entries: paths,
       publicPath,
       routes,
@@ -104,7 +106,7 @@ export default async function registerClientSSR(props: Props) {
       debug,
       rootDir,
       app,
-      appProps
+      appProps,
     });
   }
 
@@ -130,8 +132,9 @@ export default async function registerClientSSR(props: Props) {
         route,
         clientUseRouter,
         routes,
+        statsJson: stats?.toJson()
       })
     );
-    debug && console.log(chalk.gray(`-`, r));
+    debug && console.log(chalk.gray(`✓`, r));
   });
 }

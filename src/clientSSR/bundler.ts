@@ -11,7 +11,9 @@ import { formatClassName } from "../utils/text";
 import { generateEntry } from "../utils/generateEntry";
 import { getWebpackReactConfigs } from "../webpack.config.client";
 
-export default function bundleClientSSR(props: BundleClientSSRProps) {
+export default function bundleClientSSR(
+  props: BundleClientSSRProps
+): Promise<webpack.Stats | undefined> {
   const {
     publicPath = "./public",
     route,
@@ -20,27 +22,31 @@ export default function bundleClientSSR(props: BundleClientSSRProps) {
     webpackConfigs = {},
   } = props;
 
-  const { entryPath } = generateEntry(props, { includeImport: true });
   const clientConfigPath = path.join(
     path.resolve("./"),
     "webpack.config.client"
   );
   // // @ts-ignore
-  let dfConfigs = {};
+  let dfConfigs: webpack.Configuration = {};
   // Must be js file
   if (fs.existsSync(clientConfigPath + ".js")) {
     dfConfigs = require(clientConfigPath) || {};
   }
-  
+
   let mode: WebpackMode =
+    dfConfigs.mode ||
     webpackConfigs?.mode ||
     (process.env.NODE_ENV as WebpackMode) ||
     "development";
 
+  const { entryPath } = generateEntry(props, {
+    includeImport: true,
+    development: mode === "development",
+  });
   const clientConfigs = getWebpackReactConfigs({
     mode,
     publicPath,
-    entry: [`./${entryPath}`],
+    entry: { [formatClassName(route)]: [`./${entryPath}`] },
     route,
     distDir,
   });
@@ -49,38 +55,43 @@ export default function bundleClientSSR(props: BundleClientSSRProps) {
     clientConfigs,
     {
       mode,
-      output: {
-        path: path.join(distDir, "/static"),
-        filename: `${formatClassName(route)}.js`,
-        publicPath: "/static/",
-      },
+      // output: {
+      //   path: path.join(distDir, "/static"),
+      //   filename: `${formatClassName(route)}.js`,
+      //   publicPath: "/static/",
+      // },
     },
     dfConfigs,
     webpackConfigs
   );
 
-  if (process.env.NODE_ENV === "development") {
+  if (mode === "development") {
     // configs = merge(configs, {});
     const compiler = webpack(configs);
     props.app
       ?.use(
         webpackDevelopmentMiddleware(compiler, {
           publicPath: configs.output?.publicPath,
+          stats: true,
+          serverSideRender: true
         })
       )
       .use(
         webpackHotMiddleware(compiler, {
           log: false,
-          path: path.join(route, "__webpack_hmr"),
+          path: path.join(route.replace("*", ""), "__webpack_hmr"),
         })
       );
-    return Promise.resolve();
+    return Promise.resolve(undefined);
   }
 
   const compiler = webpack(configs);
 
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
+
+      let messageStr = `✓ ${route}`;
+
       if (err) {
         console.log(chalk.red("Packing clientSSR error: ", err.toString()));
         return reject(err);
@@ -97,15 +108,30 @@ export default function bundleClientSSR(props: BundleClientSSRProps) {
         });
         console.log(chalk.red(errorStr));
         fs.writeFileSync(
-          path.join(rootDir, "rumbo.clientSSR-error.log"),
+          path.join(rootDir, "../rumbo.clientSSR-error.log"),
           errorStr
         );
         console.log(chalk.red(`End packing clientSSR error`));
         return reject(`Failed`);
       }
+      if (stats?.compilation.warnings.length) {
+        messageStr += ` (${stats?.compilation.warnings.length} warnings)`;
+        let errorStr = "";
+        stats?.compilation.warnings.forEach((err, i) => {
+          // console.log(chalk.gray(`--- Warning ${i}: ${err.message}`));
+          errorStr += `--- Warning ${i + 1} ---\n: ${
+            err.stack
+          }\n--- End of warning ${i + 1} ---\n`;
+        });
+        fs.writeFileSync(
+          path.join(rootDir, "../rumbo.clientSSR-warning.log"),
+          errorStr
+        );
+      }
 
-      console.log(chalk.gray(`- Packing SSR client ${route} completed`));
-      acept({});
+      console.log(chalk.gray(messageStr));
+      
+      acept(stats);
     });
   });
 }
