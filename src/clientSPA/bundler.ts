@@ -6,7 +6,7 @@ import webpackHotMiddleware from "webpack-hot-middleware";
 import webpackDevelopmentMiddleware from "webpack-dev-middleware";
 
 import { merge } from "webpack-merge";
-import { InjectManifest, GenerateSW } from "workbox-webpack-plugin";
+import { GenerateSW } from "workbox-webpack-plugin";
 
 import { formatClassName } from "../utils/text";
 import { generateEntry } from "../utils/generateEntry";

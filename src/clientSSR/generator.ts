@@ -78,6 +78,7 @@ export function getAppComponent(props: {
 }) {
   const { rootDir, route } = props;
 
+  const buildProduction = process.env.NODE_ENV === "production";
   const componentPath = path.join(
     rootDir,
     "..",
@@ -85,7 +86,7 @@ export function getAppComponent(props: {
     `rumboEntry${formatClassName(route)}.tsx`
   );
 
-  if (!fs.existsSync(componentPath)) {
+  if (!fs.existsSync(componentPath) && !buildProduction) {
     generateApp({
       ...props,
       componentPath,

@@ -20,12 +20,9 @@ export function getWebpackReactConfigs(
 ): webpack.Configuration {
   let { mode, route, entry, distDir, publicPath } = props;
   const isDevelopment = (mode || process.env.NODE_ENV) === "development";
-  // let entry = props.entry[formatClassName(route)];
+  const isBuildProduction = process.env.NODE_ENV === "production";
+
   if (isDevelopment) {
-    // entry.push(
-    //   "react-hot-loader/patch",
-    //   `webpack-hot-middleware/client?path=${path.join(route.replace("*", ""), "__webpack_hmr")}`
-    // );
     entry[formatClassName(route)].push(
       "react-hot-loader/patch",
       `webpack-hot-middleware/client?path=${path.join(
@@ -43,64 +40,68 @@ export function getWebpackReactConfigs(
       path: path.join(distDir, "static"),
       publicPath: "/static",
       filename: "[name].[fullhash:8].js",
-      // sourceMapFilename: "[name].[fullhash:8].map",
       chunkFilename: "[name].[fullhash:8]-[id].js",
     },
     module: {
-      rules: [
-        {
-          test: /\.(tsx|ts|js|jsx)?$/,
-          exclude: /node_modules/,
-          use: {
-            loader: "babel-loader",
-            options: {
-              presets: [
-                "@babel/preset-react",
-                "@babel/preset-typescript",
-                "@babel/preset-env",
-                "@babel/preset-flow"
-              ],
-            },
-          },
-        },
-        {
-          oneOf: [
+      rules: isBuildProduction
+        ? []
+        : [
             {
-              test: /\.module\.scss$/,
-              use: [
-                // MiniCssExtractPlugin.loader,
-                {
-                  loader: "css-loader",
-                  options: {
-                    modules: true,
-                    url: false,
-                    sourceMap: false
-                  },
+              test: /\.(tsx|ts|js|jsx)?$/,
+              exclude: /node_modules/,
+              use: {
+                loader: "babel-loader",
+                options: {
+                  presets: [
+                    "@babel/preset-react",
+                    "@babel/preset-typescript",
+                    "@babel/preset-env",
+                    "@babel/preset-flow",
+                  ],
                 },
-                "sass-loader",
-              ],
+              },
             },
             {
-              test: /\.(scss|sass|css)$/i,
-              use: [
-                // "style-loader",
+              oneOf: [
                 {
-                  loader: MiniCssExtractPlugin.loader,
-                  options: {
-                    esModule: false,
-                  },
+                  test: /\.module\.scss$/,
+                  use: [
+                    !isBuildProduction && MiniCssExtractPlugin.loader,
+                    isBuildProduction
+                      ? "css-loader"
+                      : {
+                          loader: "css-loader",
+                          options: {
+                            modules: true,
+                            url: false,
+                            sourceMap: false,
+                          },
+                        },
+                    "sass-loader",
+                  ],
+                  // .filter((loader) => isBuildProduction ? typeof loader === "string" : loader),
                 },
                 {
-                  loader: "css-loader",
-                  options: { url: false, sourceMap: false },
+                  test: /\.(scss|sass|css)$/i,
+                  use: [
+                    // "style-loader",
+                    {
+                      loader: MiniCssExtractPlugin.loader,
+                      options: {
+                        esModule: false,
+                      },
+                    },
+                    {
+                      loader: "css-loader",
+                      options: { url: false, sourceMap: false },
+                    },
+                    "sass-loader",
+                    "postcss-loader",
+                  ],
                 },
-                "sass-loader",
-                "postcss-loader",
               ],
             },
           ],
-        },
-      ],
     },
     resolve: {
       extensions: [".ts", ".js", ".tsx", ".json"],
