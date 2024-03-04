@@ -5,14 +5,14 @@ import { createElement } from "react";
 import { NextFunction, Request, Response } from "express";
 import { renderToPipeableStream, renderToString } from "react-dom/server";
 
-import { formatClassName } from "../utils/text";
-import { getAppComponent } from "../clientSSR/generator";
+import { getAppEntry } from "../clientSSR/generator";
 import { isPromise } from "util/types";
-import type { Stats } from "webpack";
+import type { StatsCompilation } from "webpack";
+import { formatClassName } from "../utils/text";
 
 export function clientSPAHandler(
   props: RumboRegisterClientSPAProps,
-  stats?: Stats
+  statsJson?: StatsCompilation
 ) {
   const {
     app,
@@ -22,24 +22,33 @@ export function clientSPAHandler(
     rootDir,
     pwaEnabled = false,
     clientUseRouter,
-    distDir,
+    staticImports,
   } = props;
 
-  const { default: AppComponent } = getAppComponent({
-    publicPath,
-    route,
-    debug,
-    rootDir,
-    pwaEnabled,
-  });
-
+  let AppComponent: any;
   let getServerProps: any = null;
-  try {
-    const meta = require(path.join(props.location, "_routeMeta"));
-    getServerProps = meta.getServerProps;
-  } catch (err) {}
 
-  var statsJson = stats?.toJson();
+  if (staticImports) {
+    AppComponent = staticImports.__rumboEntrySPA.staticImport.default;
+    // _undefined is used when method is not defined
+    getServerProps =
+      staticImports[formatClassName(`${route}/__routeMeta_undefined`)]
+        ?.staticImport.default;
+  } else {
+    const importedComponent = getAppEntry({
+      publicPath,
+      route,
+      debug,
+      rootDir,
+      pwaEnabled,
+    });
+    AppComponent = importedComponent.default;
+
+    try {
+      const meta = require(path.join(props.location, "_routeMeta"));
+      getServerProps = meta.getServerProps;
+    } catch (err) {}
+  }
 
   app.get(
     `${route}*`,
@@ -91,8 +100,8 @@ export function clientSPAHandler(
           clientUseRouter,
           path: req.path,
           assets: statsJson?.assets
-            ?.filter((item) => item.name.endsWith(".css"))
-            .map((item) => `/static/${item.name}`),
+            // ?.filter((item) => item.name.endsWith(".css"))
+            ?.map((item) => `/static/${item.name}`),
         },
         globalData,
         serverData,
@@ -104,10 +113,8 @@ export function clientSPAHandler(
         bootstrapScripts: statsJson?.assets
           ?.filter((item) => item.name.endsWith(".js"))
           .map((item) => `/static/${item.name}`),
-        onShellReady() {
-          res.setHeader("content-type", "text/html");
-        },
         onAllReady() {
+          res.setHeader("content-type", "text/html");
           pipe(res);
         },
         onError(err: any, info) {

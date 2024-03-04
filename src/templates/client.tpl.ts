@@ -1,4 +1,4 @@
-export default `import { createElement, StrictMode } from "react";
+export default `import { createElement } from "react";
 
 import ClientEntry from "rumbo/components/ClientEntry";
 import ErrorBoundary from "rumbo/components/ErrorBoundary";

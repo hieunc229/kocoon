@@ -67,8 +67,7 @@ async function handleRequest(
   res: Response
 ) {
   const { handler } = options.handlerProps;
-  const { AppComponent, route, routes, clientUseRouter } =
-    options.props;
+  const { AppComponent, staticRoutes, clientUseRouter } = options.props;
 
   let serverData = null;
   let globalData = null;
@@ -118,37 +117,10 @@ async function handleRequest(
     routeProps = __routeProps;
   }
 
-  const staticRoutes: RouteObject[] = [];
-  const routeEntries = Object.entries(routes).filter(
-    (item) => !excludeRegex.test(item[0])
-  );
-  for (const [route, { handler }] of routeEntries) {
-    const layoutHandler = getLayoutRoute(route, routes);
-    let props = req.route.path === route ? routeProps : null;
-    if (layoutHandler?.layout) {
-      staticRoutes.push({
-        path: route,
-        element: createElement(
-          layoutHandler.layout.default,
-          handler.layoutProps,
-          createElement(handler.default, props)
-        ),
-      });
-    } else {
-      staticRoutes.push({
-        path: route,
-        element: createElement(handler.default, props),
-      });
-    }
-  }
-
   const staticHandler = createStaticHandler(staticRoutes) as StaticHandler;
-  const assets = statsJson?.assets
-    ?.filter((item) => item.name.endsWith(".css"))
-    .map((item) => `/static/${item.name}`);
+  const assets = statsJson?.assets?.map((item) => `/static/${item.name}`);
 
-  // If client already have router, server mustn't include a router
-  let AppContainer = clientUseRouter
+  const AppContainer = clientUseRouter
     ? getAppWithoutRouter({
         serverData,
         AppComponent,
@@ -166,20 +138,17 @@ async function handleRequest(
         globalData,
         req,
         routeProps,
-        settings: { assets }
+        settings: { assets },
       });
 
   renderToString(AppContainer);
 
   const { pipe } = renderToPipeableStream(AppContainer, {
-    // bootstrapScripts: stats [`/static/${formatClassName(route)}.js`],
     bootstrapScripts: statsJson?.assets
       ?.filter((item) => item.name.endsWith(".js"))
       .map((item) => `/static/${item.name}`),
-    onShellReady() {
-      res.setHeader("content-type", "text/html");
-    },
     onAllReady() {
+      res.setHeader("content-type", "text/html");
       pipe(res);
     },
     onError(err: any, info) {
@@ -222,7 +191,7 @@ function getAppWithoutRouter(props: {
       routeProps={{ [req.route.path]: { props: routeProps } }}
       settings={settings}
     >
-      {ExtraComponent}
+      {ExtraComponent || null}
       {current.Component
         ? createElement(current.Component, routeProps)
         : current.element}
@@ -239,7 +208,7 @@ async function getAppWithRouter(props: {
   AppComponent: any;
   routeProps: any;
   ExtraComponent?: any;
-  settings: any
+  settings: any;
 }) {
   const {
     req,
@@ -250,7 +219,7 @@ async function getAppWithRouter(props: {
     globalData,
     routeProps,
     ExtraComponent,
-    settings
+    settings,
   } = props;
 
   const { query, dataRoutes } = createStaticHandler(staticHandler.dataRoutes);
@@ -266,7 +235,7 @@ async function getAppWithRouter(props: {
       data={serverData}
       settings={settings}
     >
-      {ExtraComponent}
+      {ExtraComponent || null}
       <StaticRouterProvider context={context} router={router} />
     </AppComponent>
   );

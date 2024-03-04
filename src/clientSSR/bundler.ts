@@ -8,12 +8,13 @@ import webpackDevelopmentMiddleware from "webpack-dev-middleware";
 
 import { merge } from "webpack-merge";
 import { formatClassName } from "../utils/text";
-import { generateEntry } from "../utils/generateEntry";
+import { generateClient } from "../utils/generateClient";
 import { getWebpackReactConfigs } from "../webpack.config.client";
+import type { StatsCompilation } from "webpack";
 
 export default function bundleClientSSR(
   props: BundleClientSSRProps
-): Promise<webpack.Stats | undefined> {
+): Promise<StatsCompilation | undefined> {
   const {
     publicPath = "./public",
     route,
@@ -39,9 +40,9 @@ export default function bundleClientSSR(
     (process.env.NODE_ENV as WebpackMode) ||
     "development";
 
-  const { entryPath } = generateEntry(props, {
+  const { entryPath } = generateClient(props, {
     includeImport: true,
-    development: mode === "development",
+    development: process.env.NODE_ENV === "development",
   });
   const clientConfigs = getWebpackReactConfigs({
     mode,
@@ -53,19 +54,11 @@ export default function bundleClientSSR(
 
   let configs: webpack.Configuration = merge(
     clientConfigs,
-    {
-      mode,
-      // output: {
-      //   path: path.join(distDir, "/static"),
-      //   filename: `${formatClassName(route)}.js`,
-      //   publicPath: "/static/",
-      // },
-    },
     dfConfigs,
     webpackConfigs
   );
 
-  if (mode === "development") {
+  if (process.env.NODE_ENV === "development") {
     // configs = merge(configs, {});
     const compiler = webpack(configs);
     props.app
@@ -131,7 +124,7 @@ export default function bundleClientSSR(
 
       console.log(chalk.gray(messageStr));
       
-      acept(stats);
+      acept(stats?.toJson());
     });
   });
 }

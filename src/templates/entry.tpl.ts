@@ -7,11 +7,12 @@ type AppProps = {
   children: any,
   session: any,
   routeProps: any,
-  settings: { clientUseRouter?: boolean } 
+  settings: { clientUseRouter?: boolean, assets?: string[] } 
 }
 
 export default function App(props: AppProps) {
-  const { data, settings, children, globalData, session, routeProps } = props;
+  const { assets = [], ...settings } = props.settings;
+  const { data, children, globalData, session, routeProps } = props;
   const helmet = Helmet.renderStatic();
 
   return (<AppContextProvider serverData={data} session={session}>

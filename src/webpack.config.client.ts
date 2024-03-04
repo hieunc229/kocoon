@@ -1,10 +1,11 @@
+import path from "path";
 import webpack from "webpack";
+import merge from "webpack-merge";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import OptimizeCSSAssetsPlugin from "optimize-css-assets-webpack-plugin";
 
 import { formatClassName } from "./utils/text";
-import merge from "webpack-merge";
-import path from "path";
-import HtmlWebpackPlugin from "html-webpack-plugin";
 
 type Props = {
   mode?: WebpackMode;
@@ -19,13 +20,11 @@ export function getWebpackReactConfigs(
   preConfigs?: webpack.Configuration
 ): webpack.Configuration {
   let { mode, route, entry, distDir, publicPath } = props;
-  const isDevelopment = (mode || process.env.NODE_ENV) === "development";
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const isProduction = process.env.NODE_ENV === "production";
+
   // let entry = props.entry[formatClassName(route)];
   if (isDevelopment) {
-    // entry.push(
-    //   "react-hot-loader/patch",
-    //   `webpack-hot-middleware/client?path=${path.join(route.replace("*", ""), "__webpack_hmr")}`
-    // );
     entry[formatClassName(route)].push(
       "react-hot-loader/patch",
       `webpack-hot-middleware/client?path=${path.join(
@@ -58,7 +57,7 @@ export function getWebpackReactConfigs(
                 "@babel/preset-react",
                 "@babel/preset-typescript",
                 "@babel/preset-env",
-                "@babel/preset-flow"
+                "@babel/preset-flow",
               ],
             },
           },
@@ -69,31 +68,36 @@ export function getWebpackReactConfigs(
               test: /\.module\.scss$/,
               use: [
                 // MiniCssExtractPlugin.loader,
-                {
-                  loader: "css-loader",
-                  options: {
-                    modules: true,
-                    url: false,
-                    sourceMap: false
-                  },
-                },
+                isProduction
+                  ? "css-loader"
+                  : {
+                      loader: "css-loader",
+                      options: {
+                        modules: true,
+                        url: false,
+                        sourceMap: false,
+                      },
+                    },
                 "sass-loader",
               ],
             },
             {
               test: /\.(scss|sass|css)$/i,
               use: [
-                // "style-loader",
-                {
-                  loader: MiniCssExtractPlugin.loader,
-                  options: {
-                    esModule: false,
-                  },
-                },
-                {
-                  loader: "css-loader",
-                  options: { url: false, sourceMap: false },
-                },
+                isProduction
+                  ? "style-loader"
+                  : {
+                      loader: MiniCssExtractPlugin.loader,
+                      options: {
+                        esModule: false,
+                      },
+                    },
+                isProduction
+                  ? "css-loader"
+                  : {
+                      loader: "css-loader",
+                      options: { url: false, sourceMap: false },
+                    },
                 "sass-loader",
                 "postcss-loader",
               ],
@@ -110,6 +114,7 @@ export function getWebpackReactConfigs(
       new webpack.ProvidePlugin({
         React: "react",
       }),
+
       new MiniCssExtractPlugin({
         filename: `${formatClassName(route)}.css`,
       }),
@@ -129,26 +134,36 @@ export function getWebpackReactConfigs(
     configs = merge(configs, preConfigs);
   }
 
-  if (mode === "production") {
+  if (isProduction) {
     configs = merge(configs, {
+      mode: "production",
+      devtool: false,
       optimization: {
         minimize: true,
-        // minimizer: [new CssMinimizerPlugin()]
       },
+      plugins: [
+        new webpack.DefinePlugin({
+          "process.env.NODE_ENV": "production",
+        }),
+      ],
     });
-  } else {
-    // @ts-ignore
-    configs.module?.rules[1].oneOf[1].use.splice(0, 0, "style-loader");
-
+  } else if (isDevelopment) {
     configs = merge(configs, {
       devtool: "cheap-module-source-map",
       plugins: [new webpack.HotModuleReplacementPlugin()],
       resolve: {
         alias: {
-          rumbo: __dirname,
+          "rumbo/components/ClientEntry": "rumbo/components/ClientEntryHot",
         },
       },
     });
+  } else {
+    // BUILD
+    configs = merge(configs, {
+      optimization: {
+        minimizer: [new OptimizeCSSAssetsPlugin({})]
+      }
+    })
   }
 
   return configs;

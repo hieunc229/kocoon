@@ -1,9 +1,8 @@
-import { hot } from "react-hot-loader/root";
+import Helmet from "react-helmet";
 
 import { createElement } from "react";
 import { AppContextProvider } from "./context";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Helmet from "react-helmet";
 
 type Props = {
   routes: {
@@ -19,16 +18,22 @@ type Props = {
   wrapper?: any;
 };
 
-function ClientApp(props: Props) {
+export default function ClientApp(props: Props) {
   const routes = props.routes;
   const AppContainer = props.wrapper;
   const header = props.settings.assets ? (
     <Helmet>
       {props.settings.assets
-        .filter((name: string) => name.endsWith(".css"))
-        .map((name: string) => (
-          <link key={`style-${name}`} rel="stylesheet" href={name} />
+        .filter((path: string) => path.endsWith(".css"))
+        .map((path: string) => (
+          <link key={`style-${path}`} rel="stylesheet" href={path} />
         ))}
+
+      {/* {props.settings.assets
+        .filter((path: string) => path.endsWith(".js"))
+        .map((path: string) => (
+          <script key={`script-${path}`} src={path}></script>
+        ))} */}
     </Helmet>
   ) : undefined;
 
@@ -75,7 +80,3 @@ function ClientApp(props: Props) {
 
   return <>{Children}</>;
 }
-
-export default process.env.NODE_ENV === "development"
-  ? hot(ClientApp)
-  : ClientApp;

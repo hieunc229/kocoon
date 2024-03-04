@@ -8,7 +8,7 @@ import { excludeRegex, getLayoutRoute } from "./route";
 
 import templateClient from "../templates/client.tpl";
 
-export function generateEntry(
+export function generateClient(
   props: GenerateEntryProps,
   options: { includeImport?: boolean; development: boolean }
 ) {
@@ -43,10 +43,13 @@ export function generateEntry(
   if (development) {
     importPaths.push(
       `import { AppContainer } from 'react-hot-loader';`,
-      `import { render } from "@hot-loader/react-dom";`
+      `import { render } from "@hot-loader/react-dom";`,
+      `import { StrictMode } from "react"`
     );
   } else {
-    importPaths.push(`import { hydrateRoot, createRoot } from "react-dom/client";`)
+    importPaths.push(
+      `import { hydrateRoot } from "react-dom/client";`
+    );
   }
 
   let renderContent = development
@@ -60,7 +63,8 @@ export function generateEntry(
   if (module["hot"]) {
     module["hot"].accept();
   }`
-    : "createRoot(root).render(<StrictMode>{ClientComponent}</StrictMode>);";
+  : `hydrateRoot(root, ClientComponent)`;
+    // : "createRoot(root).render(<StrictMode>{ClientComponent}</StrictMode>);";
 
   const content = templateClient
     .replace("{{imports}}", importPaths.join("\n"))

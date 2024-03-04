@@ -1,21 +1,23 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
-import webpack, { Stats, Configuration } from "webpack";
+import webpack from "webpack";
 import webpackHotMiddleware from "webpack-hot-middleware";
 import webpackDevelopmentMiddleware from "webpack-dev-middleware";
+
+import type { StatsCompilation, Configuration } from "webpack";
 
 import { merge } from "webpack-merge";
 import { InjectManifest, GenerateSW } from "workbox-webpack-plugin";
 
 import { formatClassName } from "../utils/text";
-import { generateEntry } from "../utils/generateEntry";
+import { generateClient } from "../utils/generateClient";
 import { importPathsToClientRoutes } from "../utils/route";
 import { getWebpackReactConfigs } from "../webpack.config.client";
 
 export default async function bundleClientSPA(
   props: RumboBundleClientSPAProps
-): Promise<Stats | undefined> {
+): Promise<StatsCompilation | undefined> {
   const {
     publicPath = "./public",
     location,
@@ -52,7 +54,7 @@ export default async function bundleClientSPA(
     (process.env.NODE_ENV as WebpackMode) ||
     "development";
 
-  const { entryPath } = generateEntry(
+  const { entryPath } = generateClient(
     {
       appProps: {
         renderStrategy: "auto",
@@ -64,13 +66,13 @@ export default async function bundleClientSPA(
       routes: importPathsToClientRoutes({ paths: entries }),
       entries,
     },
-    { development: mode === "development" }
+    { development: process.env.NODE_ENV === "development" }
   );
 
   let entry = { [formatClassName(route)]: [`./${entryPath}`] };
   let plugins = [];
 
-  if (pwaEnabled && mode === "production") {
+  if (pwaEnabled && process.env.NODE_ENV === "production") {
     // entry["service-worker"] = [path.join(rootDir, "service-worker.ts")];
     plugins.push(
       new GenerateSW({
@@ -100,10 +102,9 @@ export default async function bundleClientSPA(
   });
 
   const configs: Configuration = merge(clientConfigs, dfConfigs, { plugins });
-
   const compiler = webpack(configs);
 
-  if (mode === "development") {
+  if (process.env.NODE_ENV === "development") {
     props.app
       .use(
         webpackDevelopmentMiddleware(compiler, {
@@ -163,7 +164,7 @@ export default async function bundleClientSPA(
       }
 
       console.log(chalk.gray(messageStr));
-      acept(stats);
+      acept(stats?.toJson());
     });
   });
 }

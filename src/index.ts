@@ -13,8 +13,8 @@ import { staticMiddleware } from "./utils/staticMiddleware";
 export default async function Rumbo(app: Express, options: RumboProps) {
   if (process.env.NODE_ENV === "development") {
     console.clear();
+    process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");
   }
-  process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");
   console.log(chalk.gray(`Rumbo is starting in ${process.env.NODE_ENV}...`));
 
   const {
@@ -83,7 +83,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
           staticImports,
           rootDir,
           ...client,
-          excludePaths: client.excludePaths || []
+          excludePaths: client.excludePaths || [],
         });
         break;
       case "client-ssr":

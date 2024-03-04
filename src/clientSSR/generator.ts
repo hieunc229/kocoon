@@ -4,7 +4,6 @@ import chalk from "chalk";
 import templateEntry from "../templates/entry.tpl";
 
 import { rumboTempDir } from "../configs";
-import { formatClassName } from "../utils/text";
 
 export default function generateApp(props: {
   publicPath: string;
@@ -14,8 +13,7 @@ export default function generateApp(props: {
   debug: boolean;
   pwaEnabled?: boolean;
 }) {
-  const { publicPath, templatePath, componentPath, route, debug } =
-    props;
+  const { publicPath, templatePath, componentPath, debug } = props;
 
   const htmlTemplate = fs.readFileSync(
     templatePath || `${publicPath}/index.html`,
@@ -34,23 +32,42 @@ export default function generateApp(props: {
       .replace("<meta charset=", "<meta charSet=")
       // fix link doesn't have closing tag
       .replace(`rel="stylesheet"></head>`, `rel="stylesheet"/></head>`)
+      // // uncomment when using entry for each route
+      // .replace(
+      //   "</head>",
+      //   // `<link href="/static/_.css" rel="stylesheet" /></head>`
+      //   [
+      //     `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" />`,
+      //     // pwaEnabled ? `<link rel="manifest" href="/manifest.json" />`: false,
+      //     `</head>`,
+      //   ]
+      //     .filter(Boolean)
+      //     .join("")
+      // )
       .replace(
         "</head>",
-        // `<link href="/static/_.css" rel="stylesheet" /></head>`
-        [
-          `<link href="/static/${formatClassName(route)}.css" rel="stylesheet" />`,
-          // pwaEnabled ? `<link rel="manifest" href="/manifest.json" />`: false,
-          `</head>`,
-        ]
-          .filter(Boolean)
-          .join("")
+        `{assets
+        .filter((path: string) => path.endsWith(".css"))
+        .map((path: string) => (
+          <link key={\`style-\${path}\`} rel="stylesheet" href={path} />
+        ))}</head>`
       )
-      // .replace("<head>", `<head><HelmetContent />`)
+      // .replace(
+      //   "</body>",
+      //   `{assets
+      //   .filter((path: string) => path.endsWith(".js"))
+      //   .map((path: string) => (
+      //     <script
+      //       key={\`script-\${path}\`}
+      //       src={path}
+      //     ></script>
+      //   ))}</body>`
+      // )
       .replace(
-        "<head>",
-        `<head>{helmet.title.toComponent()}
+        "</head>",
+        `{helmet.title.toComponent()}
       {helmet.meta.toComponent()}
-      {helmet.link.toComponent()}`
+      {helmet.link.toComponent()}</head>`
       )
     // .replace("</body>", `<script src="/static/${formatClassName(route)}.js"></script></body>`)
   );
@@ -68,7 +85,7 @@ export default function generateApp(props: {
 }
 
 //
-export function getAppComponent(props: {
+export function getAppEntry(props: {
   rootDir: string;
   publicPath: string;
   templatePath?: string;
@@ -76,13 +93,15 @@ export function getAppComponent(props: {
   debug: boolean;
   pwaEnabled?: boolean;
 }) {
-  const { rootDir, route } = props;
+  const { rootDir } = props;
 
   const componentPath = path.join(
     rootDir,
     "..",
     rumboTempDir,
-    `rumboEntry${formatClassName(route)}.tsx`
+    // // uncomment when using entry for each route
+    // `rumboEntry${formatClassName(route)}.tsx`
+    `rumboEntry.tsx`
   );
 
   if (!fs.existsSync(componentPath)) {
