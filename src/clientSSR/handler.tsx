@@ -69,7 +69,15 @@ async function handleRequest(
   const { handler } = options.handlerProps;
   const { AppComponent, staticRoutes, clientUseRouter } = options.props;
 
-  let serverData = null;
+  // @ts-ignore
+  let serverData: any = {
+    __meta: {
+      device: req.useragent
+        ? (req.useragent.isMobile && "phone") ||
+          (req.useragent.isDesktop && "desktop")
+        : undefined,
+    },
+  };
   let globalData = null;
   let routeProps = null;
 
@@ -113,14 +121,14 @@ async function handleRequest(
     }
 
     globalData = __globalData;
-    serverData = { [req.path]: __serverData };
     routeProps = __routeProps;
+    serverData[req.path] = __serverData;
   }
 
   const staticHandler = createStaticHandler(staticRoutes) as StaticHandler;
   const assets = statsJson?.assets?.map((item) => `/static/${item.name}`);
 
-  const AppContainer = clientUseRouter
+  const ClientContainer = clientUseRouter
     ? getAppWithoutRouter({
         serverData,
         AppComponent,
@@ -141,9 +149,9 @@ async function handleRequest(
         settings: { assets },
       });
 
-  renderToString(AppContainer);
+  renderToString(ClientContainer);
 
-  const { pipe } = renderToPipeableStream(AppContainer, {
+  const { pipe } = renderToPipeableStream(ClientContainer, {
     bootstrapScripts: statsJson?.assets
       ?.filter((item) => item.name.endsWith(".js"))
       .map((item) => `/static/${item.name}`),
