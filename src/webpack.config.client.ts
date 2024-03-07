@@ -3,9 +3,10 @@ import webpack from "webpack";
 import merge from "webpack-merge";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import OptimizeCSSAssetsPlugin from "optimize-css-assets-webpack-plugin";
+// import OptimizeCSSAssetsPlugin from "optimize-css-assets-webpack-plugin";
 
 import { formatClassName } from "./utils/text";
+import { GenerateSW } from "workbox-webpack-plugin";
 
 type Props = {
   mode?: WebpackMode;
@@ -13,13 +14,14 @@ type Props = {
   entry: any;
   route: string;
   distDir: string;
+  pwaEnabled?: boolean;
 };
 
 export function getWebpackReactConfigs(
   props: Props,
   preConfigs?: webpack.Configuration
 ): webpack.Configuration {
-  let { mode, route, entry, distDir, publicPath } = props;
+  let { mode, route, entry, distDir, publicPath, pwaEnabled } = props;
   const isDevelopment = process.env.NODE_ENV === "development";
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -42,7 +44,6 @@ export function getWebpackReactConfigs(
       path: path.join(distDir, "static"),
       publicPath: "/static",
       filename: "[name].[fullhash:8].js",
-      // sourceMapFilename: "[name].[fullhash:8].map",
       chunkFilename: "[name].[fullhash:8]-[id].js",
     },
     module: {
@@ -54,11 +55,11 @@ export function getWebpackReactConfigs(
             loader: "babel-loader",
             options: {
               presets: [
+                "@babel/preset-env",
                 "@babel/preset-react",
                 "@babel/preset-typescript",
-                "@babel/preset-env",
-                "@babel/preset-flow",
               ],
+              // plugins: ["@babel/plugin-transform-modules-amd"]
             },
           },
         },
@@ -116,54 +117,53 @@ export function getWebpackReactConfigs(
       }),
 
       new MiniCssExtractPlugin({
-        filename: `${formatClassName(route)}.css`,
+        filename: "[name].[fullhash:8].css",
+        chunkFilename: "[name].[fullhash:8]-[id].css",
       }),
 
       new HtmlWebpackPlugin({
-        filename: path.join(distDir, route, "index.html"),
-        template: path.join(publicPath, "index.html"),
+        filename: "index.html",
+        minify: !isDevelopment,
+        publicPath: route.replace(/\*/g, ""),
       }),
     ],
-    optimization: {
-      // usedExports: true,
-      // runtimeChunk: "single",
-    },
   };
 
   if (preConfigs) {
     configs = merge(configs, preConfigs);
   }
 
-  if (isProduction) {
+  if (isDevelopment) {
+    configs = merge(configs, {
+      devtool: "cheap-module-source-map",
+      plugins: [new webpack.HotModuleReplacementPlugin()],
+    });
+  } else {
     configs = merge(configs, {
       mode: "production",
       devtool: false,
       optimization: {
         minimize: true,
+        splitChunks: {
+          chunks: "all",
+        },
       },
       plugins: [
         new webpack.DefinePlugin({
-          "process.env.NODE_ENV": "production",
+          "process.env.NODE_ENV": `"production"`,
         }),
       ],
     });
-  } else if (isDevelopment) {
-    configs = merge(configs, {
-      devtool: "cheap-module-source-map",
-      plugins: [new webpack.HotModuleReplacementPlugin()],
-      resolve: {
-        alias: {
-          "rumbo/components/ClientEntry": "rumbo/components/ClientEntryHot",
-        },
-      },
-    });
-  } else {
-    // BUILD
-    configs = merge(configs, {
-      optimization: {
-        minimizer: [new OptimizeCSSAssetsPlugin({})]
-      }
-    })
+
+    if (pwaEnabled) {
+      configs.plugins?.push(
+        new GenerateSW({
+          swDest: "service-worker.js",
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./
+        })
+      );
+    }
   }
 
   return configs;

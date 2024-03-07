@@ -2,6 +2,7 @@ import path from "path";
 import chalk from "chalk";
 import fse from "fs-extra";
 import express from "express";
+import useragent from "express-useragent";
 
 import registerServer from "./server/registerServer";
 import registerClientSSR from "./clientSSR/registerClientSSR";
@@ -11,6 +12,8 @@ import { Express } from "express";
 import { staticMiddleware } from "./utils/staticMiddleware";
 
 export default async function Rumbo(app: Express, options: RumboProps) {
+  app.use(useragent.express());
+
   if (process.env.NODE_ENV === "development") {
     console.clear();
     process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");
@@ -40,8 +43,8 @@ export default async function Rumbo(app: Express, options: RumboProps) {
         } as RumboAppConfigs)
     )
     .sort((a, b) => b.route.length - a.route.length);
-
-  if (distDir !== publicPath) {
+  const isProduction = process.env.NODE_ENV === "production";
+  if (!isProduction && distDir !== publicPath) {
     fse.copySync(publicPath, distDir);
   }
 
@@ -59,7 +62,10 @@ export default async function Rumbo(app: Express, options: RumboProps) {
 
   app.use(
     "/*",
-    staticMiddleware({ location: distDir, extensions: staticExtensions })
+    staticMiddleware({
+      location: isProduction ? publicPath : distDir,
+      extensions: staticExtensions,
+    })
   );
 
   for (const client of apps) {
@@ -107,7 +113,7 @@ export default async function Rumbo(app: Express, options: RumboProps) {
 
   if (listen) {
     let { host, port } = Object.assign(
-      { host: "0.0.0.0", port: 3000 },
+      { host: process.env.HOST || "0.0.0.0", port: process.env.PORT || 3000 },
       typeof listen === "object" ? listen : {}
     );
     app.listen(port, host, () => {

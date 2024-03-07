@@ -70,28 +70,6 @@ export default async function bundleClientSPA(
   );
 
   let entry = { [formatClassName(route)]: [`./${entryPath}`] };
-  let plugins = [];
-
-  if (pwaEnabled && process.env.NODE_ENV === "production") {
-    // entry["service-worker"] = [path.join(rootDir, "service-worker.ts")];
-    plugins.push(
-      new GenerateSW({
-        skipWaiting: false,
-        clientsClaim: true,
-        swDest: path.join(distDir, "service-worker.js"),
-        maximumFileSizeToCacheInBytes: 10000000,
-
-        include: [/.html$/, /.js$/, /.css$/, /.jpg$/, /.png$/, /.ico$/],
-      })
-      // new InjectManifest({
-      //   compileSrc: true,
-      //   swSrc: path.join(rootDir, "service-worker.js"),
-      //   swDest: path.join(distDir, "service-worker.js"),
-      //   maximumFileSizeToCacheInBytes: 10000000,
-      //   include: [/.html$/, /.js$/, /.css$/, /.jpg$/, /.png$/, /.ico$/]
-      // })
-    );
-  }
 
   const clientConfigs = getWebpackReactConfigs({
     mode,
@@ -99,9 +77,10 @@ export default async function bundleClientSPA(
     entry,
     route,
     distDir,
+    pwaEnabled
   });
 
-  const configs: Configuration = merge(clientConfigs, dfConfigs, { plugins });
+  const configs: Configuration = merge(clientConfigs, dfConfigs);
   const compiler = webpack(configs);
 
   if (process.env.NODE_ENV === "development") {

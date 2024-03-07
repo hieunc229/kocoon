@@ -5,6 +5,7 @@ type BundleClientSSRProps = GenerateEntryProps & {
   rootDir: string;
   app?: any;
   webpackConfigs?: webpack.Configuration;
+  pwaEnabled?: boolean
 };
 
 type GenerateEntryProps = {
@@ -12,6 +13,7 @@ type GenerateEntryProps = {
   route: string;
   appProps: RumboProps;
   entries: ResolveImportProps[];
+  pwaEnabled?: boolean;
 }
 
 type ServerProps = {

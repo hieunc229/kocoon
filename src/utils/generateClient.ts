@@ -12,10 +12,10 @@ export function generateClient(
   props: GenerateEntryProps,
   options: { includeImport?: boolean; development: boolean }
 ) {
-  const { routes, route, appProps } = props;
+  const { routes, route, appProps, pwaEnabled = false } = props;
   const { includeImport = false, development } = options || {};
 
-  const { renderStrategy = "auto", pwaEnabled = false } = appProps;
+  const { renderStrategy = "auto" } = appProps;
   const entries = props.entries.map((e) => ({
     ...e,
     import: includeImport
@@ -47,9 +47,7 @@ export function generateClient(
       `import { StrictMode } from "react"`
     );
   } else {
-    importPaths.push(
-      `import { hydrateRoot } from "react-dom/client";`
-    );
+    importPaths.push(`import { hydrateRoot } from "react-dom/client";`);
   }
 
   let renderContent = development
@@ -63,10 +61,10 @@ export function generateClient(
   if (module["hot"]) {
     module["hot"].accept();
   }`
-  : `hydrateRoot(root, ClientComponent)`;
-    // : "createRoot(root).render(<StrictMode>{ClientComponent}</StrictMode>);";
+    : `hydrateRoot(root, ClientComponent)`;
+  // : "createRoot(root).render(<StrictMode>{ClientComponent}</StrictMode>);";
 
-  const content = templateClient
+  let content = templateClient
     .replace("{{imports}}", importPaths.join("\n"))
     .replace(/{{htmlComponent}}/g, "<RouterProvider router={router} />")
     .replace(
@@ -87,11 +85,19 @@ export function generateClient(
         })
         .join(",")
     )
-    .replace("<html", "<!DOCTYPE html>\n<html")
+    // .replace("<html", "<!DOCTYPE html>\n<html")
     .replace(`{{pwaEnabled}}`, pwaEnabled ? "register()" : "")
+    // .replace(`{{pwaEnabled}}`, "")
     .replace(`{{render}}`, renderContent)
     .replace(`NODE_ENV`, `"${process.env.NODE_ENV}"`)
     .replace(`renderStrategy`, `"${renderStrategy}"`);
+
+  if (development) {
+    content = content.replace(
+      "rumbo/components/ClientEntry",
+      "rumbo/components/ClientEntryHot"
+    );
+  }
 
   if (!existsSync(rumboTempDir)) {
     mkdirSync(rumboTempDir);

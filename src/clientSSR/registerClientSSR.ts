@@ -21,6 +21,7 @@ import type { StatsCompilation } from "webpack";
 import { formatClassName } from "../utils/text";
 
 type Props = {
+  pwaEnabled?: boolean,
   location: string;
   publicPath: string;
   rootDir: string;
@@ -49,6 +50,7 @@ export default async function registerClientSSR(props: Props) {
     staticImports,
     excludePaths = [],
     appProps,
+    pwaEnabled
   } = props;
 
   // debug && console.log(chalk.green(`[Client SSR]`, route));
@@ -109,6 +111,7 @@ export default async function registerClientSSR(props: Props) {
       rootDir,
       app,
       appProps,
+      pwaEnabled
     });
   }
 

@@ -21,8 +21,9 @@ export default function bundleClientSSR(
     distDir,
     rootDir,
     webpackConfigs = {},
+    pwaEnabled = false,
   } = props;
-
+  
   const clientConfigPath = path.join(
     path.resolve("./"),
     "webpack.config.client"
@@ -44,12 +45,14 @@ export default function bundleClientSSR(
     includeImport: true,
     development: process.env.NODE_ENV === "development",
   });
+
   const clientConfigs = getWebpackReactConfigs({
     mode,
     publicPath,
     entry: { [formatClassName(route)]: [`./${entryPath}`] },
     route,
     distDir,
+    pwaEnabled,
   });
 
   let configs: webpack.Configuration = merge(
@@ -66,7 +69,7 @@ export default function bundleClientSSR(
         webpackDevelopmentMiddleware(compiler, {
           publicPath: configs.output?.publicPath,
           stats: true,
-          serverSideRender: true
+          serverSideRender: true,
         })
       )
       .use(
@@ -82,7 +85,6 @@ export default function bundleClientSSR(
 
   return new Promise((acept, reject) => {
     compiler.run((err, stats) => {
-
       let messageStr = `✓ ${route}`;
 
       if (err) {
@@ -123,7 +125,7 @@ export default function bundleClientSSR(
       }
 
       console.log(chalk.gray(messageStr));
-      
+
       acept(stats?.toJson());
     });
   });
