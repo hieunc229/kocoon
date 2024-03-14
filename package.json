@@ -1,10 +1,12 @@
 {
   "name": "rumbo",
-  "version": "0.6.46",
+  "version": "0.6.52",
   "description": "Build fullstack apps, powered by ExpressJS/React",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc && yarn make-dist",
-    "make-dist": "cp package.json dist/package.json && cp README.md dist/README.md && cp -r src/@types dist",
+    "make-dist": "cp package.json dist/package.json && cp README.md dist/README.md && cp -r src/__types dist",
     "push": " cd dist && npm publish && cd .."
   },
   "repository": {
