@@ -1,12 +1,4 @@
-/// <reference path="express" />
-
-type ExtendedRequest<
-  P = core.ParamsDictionary,
-  ResBody = any,
-  ReqBody = any,
-  ReqQuery = core.Query,
-  Locals extends Record<string, any> = Record<string, any>
-> = Express.Request<P, ResBody, ReqBody, ReqQuery> & {
+type ExtendedRequest = Express.Request & {
   user: any;
 };
 

@@ -7,8 +7,8 @@ import { renderToPipeableStream, renderToString } from "react-dom/server";
 
 import { getAppEntry } from "../clientSSR/generator";
 import { isPromise } from "util/types";
-import type { StatsCompilation } from "webpack";
 import { formatClassName } from "../utils/text";
+import type { StatsCompilation } from "webpack";
 
 export function clientSPAHandler(
   props: RumboRegisterClientSPAProps,

@@ -8,7 +8,6 @@ import webpackDevelopmentMiddleware from "webpack-dev-middleware";
 import type { StatsCompilation, Configuration } from "webpack";
 
 import { merge } from "webpack-merge";
-import { InjectManifest, GenerateSW } from "workbox-webpack-plugin";
 
 import { formatClassName } from "../utils/text";
 import { generateClient } from "../utils/generateClient";

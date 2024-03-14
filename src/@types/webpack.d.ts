@@ -1,1 +1,0 @@
-type WebpackMode = "none" | "development" | "production";
