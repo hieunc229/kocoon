@@ -3,7 +3,6 @@ import webpack from "webpack";
 import merge from "webpack-merge";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-// import OptimizeCSSAssetsPlugin from "optimize-css-assets-webpack-plugin";
 
 import { formatClassName } from "./utils/text";
 import { GenerateSW } from "workbox-webpack-plugin";
@@ -45,6 +44,8 @@ export function getWebpackReactConfigs(
       publicPath: "/static",
       filename: "[name].[fullhash:8].js",
       chunkFilename: "[name].[fullhash:8]-[id].js",
+      hotUpdateChunkFilename: "[id].[fullhash].hot-update.js",
+      hotUpdateMainFilename: "[runtime].[fullhash].hot-update.json",
     },
     module: {
       rules: [
@@ -68,7 +69,14 @@ export function getWebpackReactConfigs(
             {
               test: /\.module\.scss$/,
               use: [
-                // MiniCssExtractPlugin.loader,
+                isProduction
+                  ? "style-loader"
+                  : {
+                      loader: MiniCssExtractPlugin.loader,
+                      options: {
+                        esModule: false,
+                      },
+                    },
                 isProduction
                   ? "css-loader"
                   : {
@@ -80,6 +88,7 @@ export function getWebpackReactConfigs(
                       },
                     },
                 "sass-loader",
+                // "postcss-loader",
               ],
             },
             {
@@ -137,6 +146,9 @@ export function getWebpackReactConfigs(
     configs = merge(configs, {
       devtool: "cheap-module-source-map",
       plugins: [new webpack.HotModuleReplacementPlugin()],
+      optimization: {
+        runtimeChunk: true,
+      },
     });
   } else {
     configs = merge(configs, {
@@ -160,7 +172,7 @@ export function getWebpackReactConfigs(
         new GenerateSW({
           swDest: "service-worker.js",
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./
+          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
         })
       );
     }
