@@ -6,6 +6,7 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 import { formatClassName } from "./utils/text";
 import { GenerateSW } from "workbox-webpack-plugin";
+import { EsbuildPlugin } from "esbuild-loader";
 
 type Props = {
   mode?: WebpackMode;
@@ -40,8 +41,8 @@ export function getWebpackReactConfigs(
     name: route,
     entry,
     output: {
-      path: path.join(distDir, "static"),
-      publicPath: "/static",
+      path: path.join(distDir, "static/"),
+      publicPath: "/static/",
       filename: "[name].[fullhash:8].js",
       chunkFilename: "[name].[fullhash:8]-[id].js",
       hotUpdateChunkFilename: "[id].[fullhash].hot-update.js",
@@ -53,13 +54,14 @@ export function getWebpackReactConfigs(
           test: /\.(tsx|ts|js|jsx)?$/,
           exclude: /node_modules/,
           use: {
-            loader: "babel-loader",
+            loader: "esbuild-loader",
             options: {
-              presets: [
-                "@babel/preset-env",
-                "@babel/preset-react",
-                "@babel/preset-typescript",
-              ],
+              jsx: 'automatic',
+              // presets: [
+              //   "@babel/preset-env",
+              //   "@babel/preset-react",
+              //   "@babel/preset-typescript",
+              // ],
               // plugins: ["@babel/plugin-transform-modules-amd"]
             },
           },
@@ -87,8 +89,8 @@ export function getWebpackReactConfigs(
                         sourceMap: false,
                       },
                     },
+                "postcss-loader",
                 "sass-loader",
-                // "postcss-loader",
               ],
             },
             {
@@ -108,8 +110,8 @@ export function getWebpackReactConfigs(
                       loader: "css-loader",
                       options: { url: false, sourceMap: false },
                     },
-                "sass-loader",
                 "postcss-loader",
+                "sass-loader",
               ],
             },
           ],
@@ -144,10 +146,15 @@ export function getWebpackReactConfigs(
 
   if (isDevelopment) {
     configs = merge(configs, {
-      devtool: "cheap-module-source-map",
+      devtool: "cheap-source-map",
       plugins: [new webpack.HotModuleReplacementPlugin()],
       optimization: {
         runtimeChunk: true,
+      },
+      resolve: {
+        alias: {
+          'react-dom': '@hot-loader/react-dom',
+        },
       },
     });
   } else {
@@ -156,6 +163,7 @@ export function getWebpackReactConfigs(
       devtool: false,
       optimization: {
         minimize: true,
+        minimizer: [new EsbuildPlugin({ target: "es2021" })],
         splitChunks: {
           chunks: "all",
         },
