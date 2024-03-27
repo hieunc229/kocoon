@@ -88,7 +88,7 @@ export default async function bundleClientSPA(
         webpackDevelopmentMiddleware(compiler, {
           publicPath: configs.output?.publicPath,
           stats: true,
-          serverSideRender: true,
+          serverSideRender: false,
         })
       )
       .use(

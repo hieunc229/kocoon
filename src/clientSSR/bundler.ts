@@ -64,6 +64,7 @@ export default function bundleClientSSR(
   if (process.env.NODE_ENV === "development") {
     // configs = merge(configs, {});
     const compiler = webpack(configs);
+    
     props.app
       ?.use(
         webpackDevelopmentMiddleware(compiler, {

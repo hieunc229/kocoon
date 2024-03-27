@@ -65,7 +65,7 @@ export default function generateApp(props: {
       // )
       .replace(
         "</head>",
-        `{helmet.title.toComponent()}
+        `{titleComponent?.children ? <title>{titleComponent.children.join("")}</title> : null}
       {helmet.meta.toComponent()}
       {helmet.link.toComponent()}</head>`
       )
