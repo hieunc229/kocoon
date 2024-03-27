@@ -76,6 +76,7 @@ async function handleRequest(
         ? (req.useragent.isMobile && "phone") ||
           (req.useragent.isDesktop && "desktop")
         : undefined,
+      path: req.path,
     },
   };
   let globalData = null;
@@ -108,7 +109,11 @@ async function handleRequest(
     }
 
     if (json) {
-      return res.json(json);
+      return res.json(json || {});
+    }
+
+    if (__serverData && req.query.___json === "true") {
+      return res.json(__serverData);
     }
 
     if (document) {
@@ -153,7 +158,10 @@ async function handleRequest(
 
   const { pipe } = renderToPipeableStream(ClientContainer, {
     bootstrapScripts: statsJson?.assets
-      ?.filter((item) => item.name.endsWith(".js"))
+      ?.filter(
+        (item) =>
+          item.name.endsWith(".js") && !item.name.endsWith("hot-update.js")
+      )
       .map((item) => `/static/${item.name}`),
     onAllReady() {
       res.setHeader("content-type", "text/html");

@@ -87,7 +87,11 @@ export function clientSPAHandler(
         }
 
         if (json) {
-          return res.json(json);
+          return res.json(json || {});
+        }
+
+        if (__serverData && req.query.___json === "true") {
+          return res.json(__serverData);
         }
 
         globalData = __globalData;
@@ -111,7 +115,10 @@ export function clientSPAHandler(
 
       const { pipe } = renderToPipeableStream(AppContainer, {
         bootstrapScripts: statsJson?.assets
-          ?.filter((item) => item.name.endsWith(".js"))
+          ?.filter(
+            (item) =>
+              item.name.endsWith(".js") && !item.name.endsWith("hot-update.js")
+          )
           .map((item) => `/static/${item.name}`),
         onAllReady() {
           res.setHeader("content-type", "text/html");

@@ -5,6 +5,7 @@ const defaultContextValues = {
   serverData: null,
   router: null,
   session: null,
+  fetchServerData() {},
 };
 
 export const AppContext =
@@ -65,7 +66,7 @@ export class AppContextProvider extends Component<Props> {
   }
 
   private fetchData(path: string) {
-    fetch(`${path}?type=json`)
+    fetch(`${path}?___json=true`)
       .then((rs) => {
         if (rs.headers.get("content-type")?.includes("application/json")) {
           return rs.json();
@@ -106,7 +107,12 @@ export function useServerData<T = any>(path?: string): T | null {
   const ctx = useContext(AppContext);
   if (ctx.serverData) {
     const r = path ? path : useLocation().pathname;
-    return ctx.serverData[r];
+
+    if (r in ctx.serverData) {
+      return ctx.serverData[r];
+    }
+
+    ctx.fetchServerData(path || "/");
   }
   return null;
 }
