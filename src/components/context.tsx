@@ -93,6 +93,7 @@ export class AppContextProvider extends Component<Props> {
       router: this.props.router,
       serverData: this.state.serverData,
       updateContext: this.updateContext,
+      publicSession: this.props.serverData?.__meta?.publicSession
     };
 
     return (
