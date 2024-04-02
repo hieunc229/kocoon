@@ -18,7 +18,7 @@ type Props = {
   wrapper?: any;
 };
 
-export default function ClientApp(props: Props) {
+export default function ClientEntry(props: Props) {
   const routes = props.routes;
   const AppContainer = props.wrapper;
   const header = props.settings.assets ? (
@@ -46,11 +46,15 @@ export default function ClientApp(props: Props) {
     // }
 
     return (
-      <>
+      <AppContextProvider
+        session={props.session}
+        serverData={props.data}
+        routes={routes}
+      >
         {header}
         {currentRoute.element ||
           createElement(currentRoute.Component, currentRoute.props)}
-      </>
+      </AppContextProvider>
     );
   }
 
@@ -58,13 +62,13 @@ export default function ClientApp(props: Props) {
 
   const Children = (
     <>
-      {header}
       <AppContextProvider
         router={router}
         session={props.session}
         serverData={props.data}
         routes={routes}
       >
+        {header}
         <RouterProvider router={router} />
       </AppContextProvider>
     </>

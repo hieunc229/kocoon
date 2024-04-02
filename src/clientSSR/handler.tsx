@@ -1,27 +1,21 @@
 import chalk from "chalk";
-
-import { Request as ExpressReq, Response } from "express";
-import { StaticHandler } from "@remix-run/router";
-import {
-  renderToPipeableStream,
-  renderToStaticMarkup,
-  renderToString,
-} from "react-dom/server";
-import { createFetchRequest } from "./utils";
-import { isPromise } from "util/types";
-import { createElement } from "react";
-import { formatClassName } from "../utils/text";
-import { RouteObject } from "react-router-dom";
-import { excludeRegex, getLayoutRoute } from "../utils/route";
-
 import React from "react";
+
+import { createElement } from "react";
+import { StatsCompilation } from "webpack";
+import { RouteObject } from "react-router-dom";
+import { StaticHandler } from "@remix-run/router";
+import { Request as ExpressReq, Response } from "express";
+import { renderToPipeableStream, renderToString } from "react-dom/server";
+
+import { isPromise } from "util/types";
+import { createFetchRequest } from "./utils";
 
 import {
   StaticRouterProvider,
   createStaticHandler,
   createStaticRouter,
 } from "react-router-dom/server";
-import { StatsCompilation } from "webpack";
 
 // Fix useLayoutEffect warning message on server
 React.useLayoutEffect = React.useEffect;
@@ -77,6 +71,8 @@ async function handleRequest(
           (req.useragent.isDesktop && "desktop")
         : undefined,
       path: req.path,
+      // @ts-ignore
+      publicSession: req.session?.publicSession,
     },
   };
   let globalData = null;
