@@ -1,20 +1,33 @@
-require("ignore-styles").default(['.css', '.scss']);
-const path = require("path");
-const fse = require("fs-extra");
+import "ignore-styles";
 
-import {
-  resolveImports,
-  importPathsToClientRoutes,
-} from "rumbo/utils/route";
+import path from "path";
+import fse from "fs-extra";
 
 import bundleClientSSR from "rumbo/clientSSR/bundler";
 import generateClientSSRApp from "rumbo/clientSSR/generator";
-import configs from "../src/rumboConfigs";
-import { rumboTempName } from "rumbo/configs";
-import { formatClassName } from "rumbo/utils/text";
 
-function __bundleSSRClient({ route, item, publicPath, distDir, rootDir, appProps }) {
-  const { location, excludePaths = [] } = item;
+import configs from "../src/rumboConfigs";
+import webpackConfigs from "./webpack.config.ssr";
+
+import { rumboTempName } from "rumbo/configs";
+import { writeStats } from "./utils/writeStats";
+import { formatClassName } from "rumbo/utils/text";
+import { resolveImports, importPathsToClientRoutes } from "rumbo/utils/route";
+
+const buildDir = path.join(__dirname, "../build");
+const rootDir = path.join(__dirname, "..");
+const publicPath = path.join(__dirname, "../public");
+const distDir = path.join(rootDir, "dist");
+
+async function __bundleSSRClient({
+  route,
+  item,
+  publicPath,
+  distDir,
+  rootDir,
+  appProps,
+}) {
+  const { location, excludePaths = [], pwaEnabled } = item;
 
   const entries = resolveImports({
     route,
@@ -30,20 +43,16 @@ function __bundleSSRClient({ route, item, publicPath, distDir, rootDir, appProps
 
   const routes = importPathsToClientRoutes({ paths: entries });
 
-  const componentPath = path.join(
-    rootDir,
-    rumboTempName,
-    `clientEntry${formatClassName(route)}.tsx`
-  );
+  const componentPath = path.join(rootDir, rumboTempName, `rumboEntry.tsx`);
 
   generateClientSSRApp({
     componentPath,
     publicPath,
     route,
-    debug: true
+    debug: true,
   });
 
-  return bundleClientSSR({
+  const stats = await bundleClientSSR({
     entries,
     publicPath,
     routes,
@@ -51,18 +60,19 @@ function __bundleSSRClient({ route, item, publicPath, distDir, rootDir, appProps
     distDir,
     debug: true,
     rootDir,
-    webpackConfigs: {
-      mode: "production",
-    },
-    appProps
+    webpackConfigs,
+    appProps,
+    pwaEnabled,
   });
+
+  writeStats(
+    path.join(buildDir, `__rumbo/${formatClassName(route)}.stats.json`),
+    stats
+  );
 }
 
 async function buildClient() {
   const { routes } = configs;
-  const rootDir = path.join(__dirname, "..");
-  const publicPath = path.join(__dirname, "../public");
-  const distDir = path.join(rootDir, "dist");
 
   if (distDir !== publicPath) {
     fse.copySync(publicPath, distDir);
@@ -72,7 +82,14 @@ async function buildClient() {
     // @ts-ignore
     switch (item.type) {
       case "client-ssr":
-        await __bundleSSRClient({ route, item, publicPath, distDir, rootDir, appProps: configs });
+        await __bundleSSRClient({
+          route,
+          item,
+          publicPath,
+          distDir,
+          rootDir,
+          appProps: configs,
+        });
         break;
     }
   }

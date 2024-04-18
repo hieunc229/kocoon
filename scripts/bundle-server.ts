@@ -1,15 +1,14 @@
+import "ignore-styles";
 
-require("ignore-styles").default(['.css', '.scss']);
-
+import fs from "fs";
 import path from "path";
-import { resolveStaticImports } from "./importResolver";
+import chalk from "chalk";
+import webpack from "webpack";
 
-const fs = require("fs");
-const chalk = require("chalk");
-const webpack = require("webpack");
+import defaultConfigs from "./webpack.config.srv";
 
-const defaultConfigs = require("./webpack.config");
-const { merge } = require("webpack-merge");
+import { merge } from "webpack-merge";
+import { resolveStaticImports } from "./utils/importResolver";
 
 const buildDir = path.join(__dirname, "../build/src");
 
@@ -40,10 +39,16 @@ function updateConfigFile() {
     .replace(
       "const rumboConfigs",
       [
-        ...imports.map(
-          ({ className, classPath, method }) =>
-            `const ${className}_${method} = __importDefault(require("${classPath}"));`
-        ),
+        ...imports
+          // remove duplicates
+          .filter(
+            (item, i, list) =>
+              list.findIndex((li) => li.classPath === item.classPath) === i
+          )
+          .map(
+            ({ className, classPath, method }) =>
+              `const ${className}_${method} = __importDefault(require("${classPath}"));`
+          ),
         "const rumboConfigs",
       ].join("\n")
     )
@@ -76,26 +81,14 @@ function run() {
 
   let userConfigs = {};
 
-  const userConfigPath = "../webpack.config.server";
+  const userConfigPath = path.join(__dirname, "../webpack.config.server");
   try {
     userConfigs = require(userConfigPath);
-  } catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
 
-  let wpconfigs = merge(userConfigs, defaultConfigs, {
-    // stats: "verbose",
-    mode: "production",
-    // resolve: {
-    //   alias: {
-    //     rumbo: "../src/packages/rumbo/dist",
-    //   },
-    // },
-    // plugins: [
-    //   // @ts-ignore
-    //   new CopyPlugin({
-    //     patterns: ["./schema.prisma"]
-    //   }), // without this the prisma generate above will not work
-    // ],
-  });
+  let wpconfigs = merge(userConfigs, defaultConfigs);
 
   const compiler = webpack(wpconfigs);
 
@@ -110,9 +103,9 @@ function run() {
       console.log(chalk.red("[rumbo] Bundle server error"));
       let errorStr = "";
       stats.compilation.errors.forEach((err, i) => {
-        errorStr += `--- Error ${i + 1} ---\n: ${err.stack}\n--- End of error ${
-          i + 1
-        } ---\n`;
+        errorStr += `--- Error ${i + 1} ---\n: ${
+          err.stack
+        }\n--- End of server error ${i + 1} ---\n`;
       });
       console.log(chalk.red(errorStr));
       fs.writeFileSync("./rumbo-error.log", errorStr);
