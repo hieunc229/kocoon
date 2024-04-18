@@ -34,7 +34,7 @@
     "react-helmet": "^6.1.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.15.0",
-    "rumbo": "^0.6.59"
+    "rumbo": "^0.6.61"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
