@@ -5,7 +5,6 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 import { formatClassName } from "./utils/text";
-import { GenerateSW } from "workbox-webpack-plugin";
 import { EsbuildPlugin } from "esbuild-loader";
 
 type Props = {
@@ -174,16 +173,6 @@ export function getWebpackReactConfigs(
         }),
       ],
     });
-
-    if (pwaEnabled) {
-      configs.plugins?.push(
-        new GenerateSW({
-          swDest: "service-worker.js",
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-          dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
-        })
-      );
-    }
   }
 
   return configs;
