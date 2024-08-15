@@ -73,11 +73,34 @@ export function toStaticRoute<T = ResolveImportProps>(
 }
 
 function sortClientPath(a: ResolveImportProps, b: ResolveImportProps) {
-  if (a.handlePath.indexOf("*") !== -1 && b.handlePath.indexOf("*") == -1) {
-    return 1;
+  // Split the paths into segments
+  const segmentsA = a.handlePath.split("/");
+  const segmentsB = b.handlePath.split("/");
+
+  // Compare segment by segment
+  for (let i = 0; i < Math.max(segmentsA.length, segmentsB.length); i++) {
+    const segmentA = segmentsA[i] || "";
+    const segmentB = segmentsB[i] || "";
+
+    // Prioritize exact matches over parameters and wildcards
+    const isParamA = segmentA.startsWith(":");
+    const isParamB = segmentB.startsWith(":");
+    const isWildcardA = segmentA === "*";
+    const isWildcardB = segmentB === "*";
+
+    if (segmentA !== segmentB) {
+      if (isWildcardA && !isWildcardB) return 1;
+      if (!isWildcardA && isWildcardB) return -1;
+
+      if (isParamA && !isParamB) return 1;
+      if (!isParamA && isParamB) return -1;
+
+      return segmentA.localeCompare(segmentB);
+    }
   }
 
-  return b.handlePath.length - a.handlePath.length;
+  // If all segments are equal, shorter path comes first
+  return segmentsA.length - segmentsB.length;
 }
 
 // Define the order of HTTP methods based on priority
@@ -126,7 +149,7 @@ function getRegisterClientPath(options: {
   routePath: string;
 }): ResolveImportProps {
   const { filePath, routePath } = options;
-  const name = routePath.substring(0, routePath.lastIndexOf("."))
+  const name = routePath.substring(0, routePath.lastIndexOf("."));
   const handlePath = name.replace("index", "").replace(/\[([a-z]+)\]/gi, ":$1");
 
   return {
@@ -140,7 +163,10 @@ function getRegisterServerPath(options: {
   routePath: string;
 }): ResolveImportServerProps {
   const { filePath } = options;
-  const routePath = options.routePath.substring(0, options.routePath.lastIndexOf("."))
+  const routePath = options.routePath.substring(
+    0,
+    options.routePath.lastIndexOf(".")
+  );
   let parts = (routePath || "").split("/");
   let method = parts.pop();
   let name = parts.join("/");
