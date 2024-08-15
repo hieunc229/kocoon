@@ -36,7 +36,7 @@ export function generateClient(
 
   if (pwaEnabled) {
     importPaths.push(
-      `import { register } from "rumbo/serviceWorkerRegistration";`
+      `import { register } from "persei/serviceWorkerRegistration";`
     );
   }
 
@@ -94,8 +94,8 @@ export function generateClient(
 
   if (development) {
     content = content.replace(
-      "rumbo/components/ClientEntry",
-      "rumbo/components/ClientEntryHot"
+      "persei/components/ClientEntry",
+      "persei/components/ClientEntryHot"
     );
   }
 

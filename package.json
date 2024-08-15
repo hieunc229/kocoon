@@ -1,6 +1,6 @@
 {
-  "name": "rumbo",
-  "version": "0.6.62",
+  "name": "persei",
+  "version": "0.6.67",
   "description": "Build fullstack apps, powered by ExpressJS/React",
   "main": "./index.js",
   "types": "./index.d.ts",

@@ -116,7 +116,7 @@ export default async function registerClientSSR(props: Props) {
   }
 
   if (process.env.NODE_ENV === "production") {
-    const dataStr = fs.readFileSync(`./__rumbo/${formatClassName(route)}.stats.json`, {
+    const dataStr = fs.readFileSync(`./__persei/${formatClassName(route)}.stats.json`, {
       encoding: "utf-8",
     });
     statsJson = JSON.parse(dataStr);

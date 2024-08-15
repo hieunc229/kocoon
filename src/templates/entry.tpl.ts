@@ -1,4 +1,4 @@
-export default `import {AppContextProvider} from "rumbo/components/context";
+export default `import {AppContextProvider} from "persei/components/context";
 import Helmet from "react-helmet";
 
 type AppProps = { 

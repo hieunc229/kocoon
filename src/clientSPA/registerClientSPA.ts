@@ -15,7 +15,7 @@ export default async function registerClientSPA(
     const stats = await bundleClientSPA(props);
     statsJson = stats?.toJson();
   } else {
-    const dataStr = fs.readFileSync(`./__rumbo/${formatClassName(route)}.stats.json`, {
+    const dataStr = fs.readFileSync(`./__persei/${formatClassName(route)}.stats.json`, {
       encoding: "utf-8",
     });
     statsJson = JSON.parse(dataStr);

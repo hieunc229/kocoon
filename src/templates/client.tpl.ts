@@ -1,7 +1,7 @@
 export default `import { createElement } from "react";
 
-import ClientEntry from "rumbo/components/ClientEntry";
-import ErrorBoundary from "rumbo/components/ErrorBoundary";
+import ClientEntry from "persei/components/ClientEntry";
+import ErrorBoundary from "persei/components/ErrorBoundary";
 
 {{imports}}
 

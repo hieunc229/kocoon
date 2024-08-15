@@ -1,2 +1,2 @@
-export const rumboTempName = "__rumbo"
+export const rumboTempName = "__persei"
 export const rumboTempDir = `./${rumboTempName}`;
