@@ -1,6 +1,6 @@
 {
   "name": "persei",
-  "version": "0.6.67",
+  "version": "0.6.68",
   "description": "Build fullstack apps, powered by ExpressJS/React",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -31,11 +31,11 @@
     "fs-extra": "^11.1.1"
   },
   "peerDependencies": {
-    "react-router-dom": "^6.15.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.26.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2"
+    "express": "^4.19.2"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",

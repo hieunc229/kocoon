@@ -55,13 +55,7 @@ export function getWebpackReactConfigs(
           use: {
             loader: "esbuild-loader",
             options: {
-              jsx: 'automatic',
-              // presets: [
-              //   "@babel/preset-env",
-              //   "@babel/preset-react",
-              //   "@babel/preset-typescript",
-              // ],
-              // plugins: ["@babel/plugin-transform-modules-amd"]
+              jsx: "automatic",
             },
           },
         },
@@ -109,8 +103,8 @@ export function getWebpackReactConfigs(
                       loader: "css-loader",
                       options: { url: false, sourceMap: false },
                     },
-                "postcss-loader",
                 "sass-loader",
+                "postcss-loader",
               ],
             },
           ],
@@ -152,7 +146,7 @@ export function getWebpackReactConfigs(
       },
       resolve: {
         alias: {
-          'react-dom': '@hot-loader/react-dom',
+          "react-dom": "@hot-loader/react-dom",
         },
       },
     });

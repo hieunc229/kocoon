@@ -104,7 +104,12 @@ export class AppContextProvider extends Component<Props> {
   }
 }
 
-export function useServerData<T = any>(path?: string): T | null {
+/**
+ * @deprecated Replaced with useServerProps
+ */
+export const userServerData = useServerProps;
+
+export function useServerProps<T = any>(path?: string): T | null {
   const ctx = useContext(AppContext);
   if (ctx.serverData) {
     const r = path ? path : useLocation().pathname;
@@ -117,6 +122,8 @@ export function useServerData<T = any>(path?: string): T | null {
   }
   return null;
 }
+
+
 
 export function useSession() {
   const ctx = useContext(AppContext);
