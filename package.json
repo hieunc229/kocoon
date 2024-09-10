@@ -1,6 +1,6 @@
 {
   "name": "persei",
-  "version": "0.6.68",
+  "version": "0.7.0",
   "description": "Build fullstack apps, powered by ExpressJS/React",
   "main": "./index.js",
   "types": "./index.d.ts",

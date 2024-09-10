@@ -11,7 +11,7 @@ const __wrapper = typeof __container !== "undefined" ? __container : null;
 if (typeof document !== "undefined") {
   const root = document.querySelector("#root");
   if (root) {
-    const {data={},settings={},globalData={}, session={},routeProps={}} = JSON.parse(document.querySelector("#ssr-data")?.innerHTML || "{}");
+    const {data={},settings={},globalData={}, session={},routeProps={}} = JSON.parse(document.querySelector("#ssr-data")?.textContent || "{}");
     const routes = [{{routes}}];
 
     globalData &&
